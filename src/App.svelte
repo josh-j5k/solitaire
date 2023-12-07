@@ -33,20 +33,25 @@
 	let design = "bg-white relative rounded-[10px] cursor-default"
 	function dragStart(e: DragEvent) {
 		const element = e.target as HTMLDivElement
+		element.id = "dragging"
 		const img = document.createElement("img")
 		eleHeight = element.clientHeight / 2
 		eleWidth = element.clientWidth / 2
+		e.dataTransfer?.setData("text/html", element.outerHTML)
 		img.src =
 			"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB0AAABtCAYAAABdsWrOAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAjSURBVGhD7cExAQAAAMKg9U9tCy8gAAAAAAAAAAAAAAAAnmox0QABeT4g9gAAAABJRU5ErkJggg=="
 
 		e.dataTransfer?.setDragImage(img, 0, 0)
 	}
-	function changeCursor(e: DragEvent) {
+	function dragOver(e: DragEvent) {
 		e.preventDefault()
+		const element = e.target as HTMLElement
+		element.style.backgroundColor = "blue"
 		if (e.dataTransfer != null) {
 			e.dataTransfer.dropEffect = "move"
 		}
 	}
+
 	function drag(e: DragEvent) {
 		const element = e.target as HTMLDivElement
 		element.classList.add("dragging")
@@ -60,12 +65,15 @@
 		element.style.transform = "translate(0)"
 		element.classList.remove("dragging")
 	}
+	function drop(e: DragEvent) {
+		e.preventDefault()
+		const element = e.target as HTMLElement
+		const data = e.dataTransfer?.getData("text/html")
+		console.log(data, element)
+	}
 </script>
 
-<main
-	on:dragover={changeCursor}
-	class="min-h-screen w-screen py-20 overflow-hidden"
->
+<main class="min-h-screen w-screen py-20 overflow-hidden">
 	<div class="w-5/6 mx-auto grid gap-4 grid-cols-7">
 		<div data-deck class="relative col-start-1 col-end-2 row-start-1 row-end-2">
 			<CardFaceDown {dimensions} />
@@ -76,21 +84,33 @@
 		>
 		</div>
 		<div
+			on:dragover={dragOver}
+			role="application"
+			on:drop={drop}
 			data-stack="1"
-			class="relative h-[200px] col-start-4 col-end-5 row-start-1 row-end-2 border-4 rounded-lg border-gray-100"
+			class="relative h-[200px] z-10 col-start-4 col-end-5 row-start-1 row-end-2 border-4 rounded-lg border-gray-100"
 		>
 		</div>
 		<div
+			on:dragover={dragOver}
+			role="application"
+			on:drop={drop}
 			data-stack="2"
 			class="relative h-[200px] col-start-5 col-end-6 row-start-1 row-end-2 border-4 rounded-lg border-gray-100"
 		>
 		</div>
 		<div
+			on:dragover={dragOver}
+			role="application"
+			on:drop={drop}
 			data-stack="3"
-			class="relative h-[200px] col-start-6 col-end-7 row-start-1 row-end-2 border-4 rounded-lg border-gray-100"
+			class="relative w-full z-10 h-[200px] col-start-6 col-end-7 row-start-1 row-end-2 border-4 rounded-lg border-gray-100"
 		>
 		</div>
 		<div
+			on:dragover={dragOver}
+			role="application"
+			on:drop={drop}
 			data-stack="4"
 			class="relative h-[200px] col-start-7 col-end-8 row-start-1 row-end-2 border-4 rounded-lg border-gray-100"
 		>
@@ -170,6 +190,6 @@
 		box-shadow:
 			0 0 10px 4px rgba(255, 217, 0, 0.733),
 			20px 20px 0 rgba(0, 0, 0, 0.2);
-		z-index: 80;
+		/* z-index: 0; */
 	}
 </style>
