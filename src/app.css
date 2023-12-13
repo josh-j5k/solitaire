@@ -27,6 +27,7 @@ body {
 .fill-_red {
 	fill: red;
 }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
