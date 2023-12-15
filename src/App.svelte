@@ -1,34 +1,26 @@
 <script lang="ts">
-	import Card from "./lib/CardFaceDown.svelte"
-	import Queen from "./lib/Cards/Queen.svelte"
-	import Jack from "./lib/Cards/Jack.svelte"
-	import King from "./lib/Cards/King.svelte"
 	import Spade from "./lib/icons/Spade.svelte"
 	import Club from "./lib/icons/Club.svelte"
 	import Diamond from "./lib/icons/Diamond.svelte"
 	import Heart from "./lib/icons/Heart.svelte"
-	import { onMount, type ComponentType, beforeUpdate } from "svelte"
-
+	import Placeholder from "./lib/Placeholder.svelte"
+	import { onMount, type ComponentType } from "svelte"
+	import { setCardNameAndNumberAtrribute } from "./helpers/SetCardNameAndNumberAtrribute"
+	import { dragAndDrop } from "./helpers/DragAndDrop"
+	import { type card, type cardComponent } from "./types/Cards"
 	import CardFaceDown from "./lib/CardFaceDown.svelte"
-	type cardComponent = Array<{
-		component: ComponentType
-		fill: string
-	}>
-	type dataGame = Array<{
-		faceDown: Array<any>
-		faceUp: Array<any>
-	}>
+
+	const { cardNumber, cardType } = setCardNameAndNumberAtrribute()
+	const offsetTop = 25
+	const { drag, dragEnd, dragOver, dragStart, drop } = dragAndDrop(offsetTop)
 	let components = <cardComponent>[
-		{ component: Spade, fill: "_black" },
-		{ component: Club, fill: "_black" },
-		{ component: Heart, fill: "_red" },
-		{ component: Diamond, fill: "_red" },
+		{ component: Spade },
+		{ component: Club },
+		{ component: Heart },
+		{ component: Diamond },
 	]
 	const height = 200
-	type arr = Array<{
-		type: string[]
-		component: cardComponent
-	}>
+
 	const arr = [
 		"Ace",
 		"King",
@@ -44,120 +36,95 @@
 		"Three",
 		"Two",
 	]
+	let activeCard: string
+	let siblingCard: string
+	let parentIndex: number
+	let dataDeckOne: string
+	let dataDeckTwo: string
+	let dataDeckThree: string
+	let dataDeckFour: string
 
-	const cards = arr.map((card, index) => {
+	const cardTypeWithComponent = arr.map((card) => {
 		return {
-			card: "heelp",
+			card,
+			components: components.map((component) => component),
 		}
 	})
-	console.log(cards)
 
-	const dataGameOne = <dataGame>[
+	const Cards = <Array<card>>[]
+	cardTypeWithComponent.forEach((card) => {
+		card.components.forEach((component) => {
+			const obj = <card>{
+				card: card.card,
+				component: component.component,
+			}
+			Cards.push(obj)
+		})
+	})
+
+	const stackingRow = [
 		{
 			faceDown: [],
-			faceUp: [],
+			faceUp: <Array<card>>[],
 		},
-	]
-	const dataGameTwo = <dataGame>[
 		{
-			faceDown: Array(1),
-			faceUp: [],
+			faceDown: <Array<card>>[],
+			faceUp: <Array<card>>[],
 		},
-	]
-	const dataGameThree = <dataGame>[
 		{
-			faceDown: Array(2),
-			faceUp: [],
+			faceDown: <Array<card>>[],
+			faceUp: <Array<card>>[],
 		},
-	]
-	const dataGameFour = <dataGame>[
 		{
-			faceDown: Array(3),
-			faceUp: [],
+			faceDown: <Array<card>>[],
+			faceUp: <Array<card>>[],
 		},
-	]
-	const dataGameFive = <dataGame>[
 		{
-			faceDown: Array(4),
-			faceUp: [],
+			faceDown: <Array<card>>[],
+			faceUp: <Array<card>>[],
 		},
-	]
-	const dataGameSix = <dataGame>[
 		{
-			faceDown: Array(5),
-			faceUp: [],
+			faceDown: <Array<card>>[],
+			faceUp: <Array<card>>[],
 		},
-	]
-	const dataGameSeven = <dataGame>[
 		{
-			faceDown: Array(6),
-			faceUp: [],
+			faceDown: <Array<card>>[],
+			faceUp: <Array<card>>[],
 		},
 	]
-	const offsetTop = 25
-	let eleWidth = 0
-	let eleHeight = 0
+	let stackFaceDown = <Array<card>>[]
+	let stackFaceUp = <Array<card>>[]
+	function setCardFaceDown(arrLenght: number) {
+		for (let index = 0; index < arrLenght; index++) {
+			let randomNumber = Math.floor(Math.random() * (52 - 7 - arrLenght))
+			stackingRow[arrLenght].faceDown.push(Cards[randomNumber])
+			Cards.splice(randomNumber, 1)
+		}
+	}
+	function startGame() {
+		for (let index = 0; index < 7; index++) {
+			let randomNumber = Math.floor(Math.random() * 52)
+			stackingRow[index].faceUp.push(Cards[randomNumber])
+			Cards.splice(randomNumber, 1)
+		}
+		setCardFaceDown(1)
+		setCardFaceDown(2)
+		setCardFaceDown(3)
+		setCardFaceDown(4)
+		setCardFaceDown(5)
+		setCardFaceDown(6)
+	}
+	startGame()
+
 	let dimensions = "w-full" + " h-[" + height.toString() + "px]"
 	let design = "bg-white relative rounded-lg cursor-default"
 
-	function dragStart(e: DragEvent) {
-		const element = e.target as HTMLDivElement
-		element.id = "dragging"
-		element.style.top = "0"
-		if (element.classList.contains("dragged"))
-			element.classList.remove("dragged")
-		const img = document.createElement("img")
-		eleHeight = element.clientHeight / 2
-		eleWidth = element.clientWidth / 2
-		img.src =
-			"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB0AAABtCAYAAABdsWrOAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAjSURBVGhD7cExAQAAAMKg9U9tCy8gAAAAAAAAAAAAAAAAnmox0QABeT4g9gAAAABJRU5ErkJggg=="
-
-		e.dataTransfer?.setData("text/plain", element.id)
-		e.dataTransfer?.setDragImage(img, 0, 0)
+	function revealCard(ev: MouseEvent) {
+		const element = Cards.pop()!
+		stackFaceUp.push(element)
+		stackFaceUp = stackFaceUp
 	}
-	function dragOver(e: DragEvent) {
-		e.preventDefault()
-		const element = e.target as HTMLElement
-
-		if (e.dataTransfer != null) {
-			e.dataTransfer.dropEffect = "move"
-		}
-	}
-
-	function drag(e: DragEvent) {
-		const dragoverZone = document.querySelectorAll(".dragover_zone")
-		dragoverZone.forEach((zone) => {
-			zone.classList.add("show")
-		})
-		const element = e.target as HTMLDivElement
-		element.classList.add("dragging")
-		const parent = element.offsetParent as HTMLDivElement
-		let centerX = e.clientX - parent.offsetLeft - eleWidth
-		let centerY = e.clientY - parent.offsetTop - eleHeight + offsetTop
-		element.style.transform = `translateX(${centerX.toString()}px) translateY(${centerY.toString()}px)`
-	}
-	function dragEnd(e: DragEvent) {
-		const dragoverZone = document.querySelectorAll(".dragover_zone")
-		const element = e.target as HTMLDivElement
-		element.style.transform = "translate(0)"
-		element.classList.remove("dragging")
-		dragoverZone.forEach((zone) => {
-			zone.classList.remove("show")
-		})
-	}
-	function drop(e: DragEvent) {
-		e.preventDefault()
-		const element = e.target as HTMLElement
-		const parent = element.parentElement
-		const id = e.dataTransfer?.getData("text/plain")!
-		const data = document.getElementById(id)!
-		parent?.appendChild(data)
-		const index = parent?.children.length! - 2
-		const top = index * offsetTop
-		data.classList.add("dragged")
-		data.style.top = top.toString() + "px"
-		data.id = ""
-	}
+	function keyBoardReveal(ev: KeyboardEvent) {}
 	onMount(() => {
 		const containingBlock = document.querySelectorAll(".containing_block")
 		containingBlock.forEach((block) => {
@@ -183,14 +150,65 @@
 	role="application"
 	class="min-h-screen w-screen py-20 overflow-hidden"
 >
-	<div class="w-5/6 mx-auto grid gap-4 grid-cols-7">
+	<div class="w-5/6 mx-auto grid gap-4 gap-y-12 grid-cols-7">
 		<div data-deck class="relative col-start-1 col-end-2 row-start-1 row-end-2">
-			<CardFaceDown {dimensions} />
+			<div
+				role="button"
+				tabindex="0"
+				on:click={revealCard}
+				on:keydown={keyBoardReveal}
+			>
+				<CardFaceDown {dimensions} />
+			</div>
 		</div>
 		<div
 			data-deck-revealed
 			class="relative col-start-2 col-end-3 row-start-1 row-end-2"
 		>
+			{#each stackFaceUp as card, index}
+				{#if (stackFaceUp.length > 3 && index === stackFaceUp.length - 3) || index === 0}
+					<div
+						data-card={cardNumber(card?.card)}
+						data-type={cardType(card?.component)}
+						draggable="true"
+						role="application"
+						on:dragstart={dragStart}
+						on:drag={drag}
+						on:dragend={dragEnd}
+						class="{dimensions} {design} dragged top-0 stack_face_up"
+					>
+						<Placeholder {card} />
+					</div>
+				{/if}
+				{#if (stackFaceUp.length > 3 && index === stackFaceUp.length - 2) || index === 1}
+					<div
+						data-card={cardNumber(card?.card)}
+						data-type={cardType(card?.component)}
+						draggable="true"
+						role="application"
+						on:dragstart={dragStart}
+						on:drag={drag}
+						on:dragend={dragEnd}
+						class="{dimensions} {design} dragged top-0 left-6 stack_face_up"
+					>
+						<Placeholder {card} />
+					</div>
+				{/if}
+				{#if (stackFaceUp.length > 3 && index === stackFaceUp.length - 1) || index === 2}
+					<div
+						data-card={cardNumber(card?.card)}
+						data-type={cardType(card?.component)}
+						draggable="true"
+						role="application"
+						on:dragstart={dragStart}
+						on:drag={drag}
+						on:dragend={dragEnd}
+						class="{dimensions} {design} dragged top-0 left-12 stack_face_up"
+					>
+						<Placeholder {card} />
+					</div>
+				{/if}
+			{/each}
 		</div>
 		<div
 			data-stack="1"
@@ -241,8 +259,8 @@
 			</div>
 		</div>
 		<div
-			data-game="1"
-			class="relative col-start-1 containing_block col-end-2 row-start-2 row-end-3"
+			data-game="0"
+			class="relative col-start-1 containing_block row-start-2 row-end-3"
 			><div
 				on:dragover={dragOver}
 				role="application"
@@ -250,23 +268,24 @@
 				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 			>
 			</div>
-			<div
-				draggable="true"
-				role="application"
-				on:dragstart={dragStart}
-				on:drag={drag}
-				on:dragend={dragEnd}
-				class="{dimensions} {design}"
-			>
-				<Jack
-					component={components[0].component}
-					class_props={components[0].fill}
-				/>
-			</div>
+			{#each stackingRow[0].faceUp as card}
+				<div
+					data-card={cardNumber(card?.card)}
+					data-type={cardType(card?.component)}
+					draggable="true"
+					role="application"
+					on:dragstart={dragStart}
+					on:drag={drag}
+					on:dragend={dragEnd}
+					class="{dimensions} {design}"
+				>
+					<Placeholder {card} />
+				</div>
+			{/each}
 		</div>
 		<div
-			data-game="2"
-			class="relative col-start-2 col-end-3 row-start-2 row-end-3 containing_block"
+			data-game="1"
+			class="relative col-start-2 row-start-2 containing_block"
 		>
 			<div
 				on:dragover={dragOver}
@@ -275,13 +294,56 @@
 				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 			>
 			</div>
-			{#each dataGameTwo[0].faceDown as _}
+			{#each stackingRow[1].faceDown as _}
 				<CardFaceDown {dimensions} />
+			{/each}
+			{#each stackingRow[1].faceUp as card}
+				<div
+					data-card={cardNumber(card?.card)}
+					data-type={cardType(card?.component)}
+					draggable="true"
+					role="application"
+					on:dragstart={dragStart}
+					on:drag={drag}
+					on:dragend={dragEnd}
+					class="{dimensions} {design}"
+				>
+					<Placeholder {card} />
+				</div>
+			{/each}
+		</div>
+		<div
+			data-game="2"
+			class="relative col-start-3 row-start-2 containing_block"
+		>
+			<div
+				on:dragover={dragOver}
+				role="application"
+				on:drop={drop}
+				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
+			>
+			</div>
+			{#each stackingRow[2].faceDown as _}
+				<CardFaceDown {dimensions} />
+			{/each}
+			{#each stackingRow[2].faceUp as card}
+				<div
+					data-card={cardNumber(card?.card)}
+					data-type={cardType(card?.component)}
+					draggable="true"
+					role="application"
+					on:dragstart={dragStart}
+					on:drag={drag}
+					on:dragend={dragEnd}
+					class="{dimensions} {design}"
+				>
+					<Placeholder {card} />
+				</div>
 			{/each}
 		</div>
 		<div
 			data-game="3"
-			class="relative col-start-3 col-end-4 row-start-2 row-end-3 containing_block"
+			class="relative col-start-4 row-start-2 containing_block"
 		>
 			<div
 				on:dragover={dragOver}
@@ -290,13 +352,27 @@
 				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 			>
 			</div>
-			{#each dataGameThree[0].faceDown as _}
+			{#each stackingRow[3].faceDown as _}
 				<CardFaceDown {dimensions} />
+			{/each}
+			{#each stackingRow[3].faceUp as card}
+				<div
+					data-card={cardNumber(card?.card)}
+					data-type={cardType(card?.component)}
+					draggable="true"
+					role="application"
+					on:dragstart={dragStart}
+					on:drag={drag}
+					on:dragend={dragEnd}
+					class="{dimensions} {design}"
+				>
+					<Placeholder {card} />
+				</div>
 			{/each}
 		</div>
 		<div
 			data-game="4"
-			class="relative col-start-4 col-end-5 row-start-2 row-end-3 containing_block"
+			class="relative col-start-5 row-start-2 containing_block"
 		>
 			<div
 				on:dragover={dragOver}
@@ -305,28 +381,27 @@
 				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 			>
 			</div>
-			{#each dataGameFour[0].faceDown as _}
+			{#each stackingRow[4].faceDown as _}
 				<CardFaceDown {dimensions} />
+			{/each}
+			{#each stackingRow[4].faceUp as card}
+				<div
+					data-card={cardNumber(card?.card)}
+					data-type={cardType(card?.component)}
+					draggable="true"
+					role="application"
+					on:dragstart={dragStart}
+					on:drag={drag}
+					on:dragend={dragEnd}
+					class="{dimensions} {design}"
+				>
+					<Placeholder {card} />
+				</div>
 			{/each}
 		</div>
 		<div
 			data-game="5"
-			class="relative col-start-5 col-end-6 row-start-2 row-end-3 containing_block"
-		>
-			<div
-				on:dragover={dragOver}
-				role="application"
-				on:drop={drop}
-				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
-			>
-			</div>
-			{#each dataGameFive[0].faceDown as _}
-				<CardFaceDown {dimensions} />
-			{/each}
-		</div>
-		<div
-			data-game="6"
-			class="relative col-start-6 col-end-7 row-start-2 row-end-3 containing_block"
+			class="relative col-start-6 row-start-2 containing_block"
 		>
 			<div
 				on:dragover={dragOver}
@@ -334,13 +409,27 @@
 				on:drop={drop}
 				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 			></div>
-			{#each dataGameSix[0].faceDown as _}
+			{#each stackingRow[5].faceDown as _}
 				<CardFaceDown {dimensions} />
+			{/each}
+			{#each stackingRow[5].faceUp as card}
+				<div
+					data-card={cardNumber(card.card)}
+					data-type={cardType(card.component)}
+					draggable="true"
+					role="application"
+					on:dragstart={dragStart}
+					on:drag={drag}
+					on:dragend={dragEnd}
+					class="{dimensions} {design}"
+				>
+					<Placeholder {card} />
+				</div>
 			{/each}
 		</div>
 		<div
-			data-game="7"
-			class="relative col-start-7 col-end-8 row-start-2 row-end-3 containing_block"
+			data-game="6"
+			class="relative col-start-7 row-start-2 containing_block"
 		>
 			<div
 				on:dragover={dragOver}
@@ -349,8 +438,22 @@
 				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 			>
 			</div>
-			{#each dataGameSeven[0].faceDown as _}
+			{#each stackingRow[6].faceDown as _}
 				<CardFaceDown {dimensions} />
+			{/each}
+			{#each stackingRow[6].faceUp as card}
+				<div
+					data-card={cardNumber(card?.card)}
+					data-type={cardType(card?.component)}
+					draggable="true"
+					role="application"
+					on:dragstart={dragStart}
+					on:drag={drag}
+					on:dragend={dragEnd}
+					class="{dimensions} {design}"
+				>
+					<Placeholder {card} />
+				</div>
 			{/each}
 		</div>
 	</div>
@@ -374,5 +477,10 @@
 	}
 	.dragged {
 		position: absolute;
+	}
+	.stack_face_up {
+		box-shadow:
+			0 -1px 2px rgba(0, 0, 0, 0.2),
+			3px 3px 8px rgba(0, 0, 0, 0.4);
 	}
 </style>
