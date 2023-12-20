@@ -9,3 +9,10 @@ export type card = {
     card: string
     component: ComponentType
 }
+
+export type deck = {
+    dataDeckOne: Array<card>,
+    dataDeckTwo: Array<card>,
+    dataDeckThree: Array<card>,
+    dataDeckFour: Array<card>,
+}

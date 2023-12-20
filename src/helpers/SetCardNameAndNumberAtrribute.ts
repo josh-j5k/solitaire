@@ -15,49 +15,50 @@ export function setCardNameAndNumberAtrribute() {
         return "heart"
     }
     function cardNumber(card: string): number {
-        let number = 0
-        switch (card) {
-            case "Ace":
-                number = 1
-                break
-            case "Two":
-                number = 2
-                break
-            case "Three":
-                number = 3
-                break
-            case "Four":
-                number = 4
-                break
-            case "Five":
-                number = 5
-                break
-            case "Six":
-                number = 6
-                break
-            case "Seven":
-                number = 7
-                break
-            case "Eight":
-                number = 8
-                break
-            case "Nine":
-                number = 9
-                break
-            case "Ten":
-                number = 10
-                break
-            case "Jack":
-                number = 11
-                break
-            case "Queen":
-                number = 12
-                break
-            case "King":
-                number = 13
-                break
+
+        if (card === "Ace") { return 1 }
+
+        else if (card === 'Two') {
+            return 2
         }
-        return number
+        else if (card === 'Three') {
+            return 3
+        }
+        else if (card === 'Four') {
+            return 4
+        }
+        else if (card === 'Five') {
+            return 5
+        }
+        else if (card === 'Six') {
+            return 6
+        }
+        else if (card === 'Seven') {
+            return 7
+        }
+        else if (card === 'Eight') {
+            return 8
+        }
+        else if (card === 'Nine') {
+            return 9
+        }
+        else if (card === 'Ten') {
+            return 10
+        }
+        else if (card === 'Jack') {
+            return 11
+        }
+        else if (card === 'Queen') {
+            return 12
+        }
+        return 13
+
     }
-    return { cardNumber, cardType }
+    function cardColor(component: ComponentType): string {
+        if (component === Spade || component === Club) {
+            return 'black'
+        }
+        return 'red'
+    }
+    return { cardNumber, cardType, cardColor }
 }

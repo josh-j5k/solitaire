@@ -1,48 +1,46 @@
 <script lang="ts">
+	import Placeholder from "./lib/Placeholder.svelte"
+	import { onMount, beforeUpdate, type ComponentType } from "svelte"
+	import { setCardNameAndNumberAtrribute } from "./helpers/SetCardNameAndNumberAtrribute"
+	import { dragAndDrop } from "./helpers/DragAndDrop"
+	import CardFaceDown from "./lib/CardFaceDown.svelte"
+	import { useMain } from "./helpers/Main"
+	// import type { card } from "./types/Cards"
+	import { type card, type cardComponent, type deck } from "./types/Cards"
 	import Spade from "./lib/icons/Spade.svelte"
 	import Club from "./lib/icons/Club.svelte"
 	import Diamond from "./lib/icons/Diamond.svelte"
 	import Heart from "./lib/icons/Heart.svelte"
-	import Placeholder from "./lib/Placeholder.svelte"
-	import { onMount, type ComponentType } from "svelte"
-	import { setCardNameAndNumberAtrribute } from "./helpers/SetCardNameAndNumberAtrribute"
-	import { dragAndDrop } from "./helpers/DragAndDrop"
-	import { type card, type cardComponent } from "./types/Cards"
-	import CardFaceDown from "./lib/CardFaceDown.svelte"
+	// let { dataCards, stackFaceUp, stackingRow, Cards, dataDeck } = useMain()
 
-	const { cardNumber, cardType } = setCardNameAndNumberAtrribute()
+	const { cardNumber, cardType, cardColor } = setCardNameAndNumberAtrribute()
 	const offsetTop = 25
-	const { drag, dragEnd, dragOver, dragStart, drop } = dragAndDrop(offsetTop)
+	// const { drag, dragEnd, dragOver, dragStart, drop } = dragAndDrop(offsetTop)
+	type row = {
+		faceDown: card[]
+		faceUp: card[]
+	}
 	let components = <cardComponent>[
 		{ component: Spade },
 		{ component: Club },
 		{ component: Heart },
 		{ component: Diamond },
 	]
-	const height = 200
-
 	const arr = [
-		"Ace",
 		"King",
+		"Ace",
 		"Queen",
+		"Nine",
 		"Jack",
 		"Ten",
-		"Nine",
 		"Eight",
 		"Seven",
-		"Six",
 		"Five",
-		"Four",
+		"Six",
 		"Three",
+		"Four",
 		"Two",
 	]
-	let activeCard: string
-	let siblingCard: string
-	let parentIndex: number
-	let dataDeckOne: string
-	let dataDeckTwo: string
-	let dataDeckThree: string
-	let dataDeckFour: string
 
 	const cardTypeWithComponent = arr.map((card) => {
 		return {
@@ -51,7 +49,7 @@
 		}
 	})
 
-	const Cards = <Array<card>>[]
+	let Cards = <Array<card>>[]
 	cardTypeWithComponent.forEach((card) => {
 		card.components.forEach((component) => {
 			const obj = <card>{
@@ -62,7 +60,9 @@
 		})
 	})
 
-	const stackingRow = [
+	let stackFaceUp = <Array<card>>[]
+	let stackingRow = <Array<row>>[]
+	stackingRow = [
 		{
 			faceDown: [],
 			faceUp: <Array<card>>[],
@@ -92,27 +92,213 @@
 			faceUp: <Array<card>>[],
 		},
 	]
-	let stackFaceDown = <Array<card>>[]
-	let stackFaceUp = <Array<card>>[]
+	let dataDeck = <deck>{
+		dataDeckOne: <Array<card>>[],
+		dataDeckTwo: <Array<card>>[],
+		dataDeckThree: <Array<card>>[],
+		dataDeckFour: <Array<card>>[],
+	}
+
+	const height = 200
+	let { decks, dataStackFaceUp, Rows } = useMain()
+	let eleWidth = 0
+	let eleHeight = 0
+	let activeCard: string
+	let activeCardNumber: number
+	let activeCardColor: string
+	let activeCardParentIndex: number
+	let activeCardIndex: number
+	let dataStackFace = false
+	let validMove = false
+	let top: string
+
+	function dragStart(e: DragEvent) {
+		const element = e.target as HTMLDivElement
+		const parent = element.parentElement?.getAttribute("data-game")
+
+		if (!parent) {
+			dataStackFace = true
+		} else {
+			dataStackFace = false
+			activeCardParentIndex = parseInt(parent)
+		}
+		activeCardIndex = parseInt(element.getAttribute("data-index")!)
+		element.id = "dragging"
+		top = element.style.top
+		element.style.top = "0"
+		if (element.classList.contains("dragged"))
+			element.classList.remove("dragged")
+		if (element.classList.contains("stack_face_up"))
+			element.classList.remove("stack_face_up")
+		const img = document.createElement("img")
+		eleHeight = element.clientHeight / 2
+		eleWidth = element.clientWidth / 2
+		img.src =
+			"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB0AAABtCAYAAABdsWrOAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAjSURBVGhD7cExAQAAAMKg9U9tCy8gAAAAAAAAAAAAAAAAnmox0QABeT4g9gAAAABJRU5ErkJggg=="
+		activeCard = element.getAttribute("data-type")!
+		activeCardNumber = parseInt(element.getAttribute("data-card")!)
+		activeCardColor = element.getAttribute("data-color")!
+		// e.dataTransfer?.setData("text/plain", element.id)
+		e.dataTransfer?.setDragImage(img, 0, 0)
+		console.log(dataStackFace)
+	}
+	function dragOver(e: DragEvent) {
+		e.preventDefault()
+		if (e.dataTransfer != null) {
+			e.dataTransfer.dropEffect = "move"
+		}
+	}
+
+	function drag(e: DragEvent) {
+		const dragoverZone = document.querySelectorAll(".dragover_zone")
+		dragoverZone.forEach((zone) => {
+			zone.classList.add("show")
+		})
+		const element = e.target as HTMLDivElement
+		element.classList.add("dragging")
+		const parent = element.offsetParent as HTMLDivElement
+		let centerX = e.clientX - parent.offsetLeft - eleWidth
+		let centerY = e.clientY - parent.offsetTop - eleHeight + offsetTop
+		element.style.transform = `translateX(${centerX.toString()}px) translateY(${centerY.toString()}px)`
+		console.log(dataStackFace, "dragging")
+	}
+	function dragEnd(e: DragEvent) {
+		const dragoverZone = document.querySelectorAll(".dragover_zone")
+		const element = e.target as HTMLDivElement
+		element.style.transform = "translate(0)"
+		element.classList.remove("dragging")
+		dragoverZone.forEach((zone) => {
+			zone.classList.remove("show")
+		})
+		element.style.top = top
+	}
+	let parentIn: number
+	function drop(e: DragEvent) {
+		e.preventDefault()
+		const element = e.target as HTMLElement
+		const parent = element.parentElement as HTMLDivElement
+
+		const lastChildElementIndex = parent?.children.length! - 1
+		const lastChildElement = parent?.children[lastChildElementIndex]
+		// const lastChildElementType = lastChildElement?.getAttribute('data-type')
+		const lastChildElementNumber = parseInt(
+			lastChildElement?.getAttribute("data-card")!
+		)
+		const parentIndex = parseInt(parent?.getAttribute("data-game")!)
+		const lastChildElementColor = lastChildElement?.getAttribute("data-color")!
+
+		const isTrue = (x: number, y: number) => x + 1 === y
+		function setDeckKey(): keyof deck {
+			if (parentIndex - 6 === 1) {
+				return "dataDeckOne"
+			} else if (parentIndex - 6 === 2) {
+				return "dataDeckTwo"
+			} else if (parentIndex - 6 === 3) {
+				return "dataDeckThree"
+			}
+			return "dataDeckFour"
+		}
+
+		if (parentIndex === activeCardIndex) {
+			return
+		}
+		parentIn = parentIndex
+		if (dataStackFace) {
+			if (parentIndex < 7) {
+				if (
+					lastChildElementColor !== activeCardColor &&
+					isTrue(activeCardNumber, lastChildElementNumber)
+				) {
+					let currentCard = stackFaceUp.pop()!
+					stackingRow[parentIndex].faceUp = [
+						...stackingRow[parentIndex].faceUp,
+						currentCard,
+					]
+					stackingRow = stackingRow
+					stackFaceUp = stackFaceUp
+				} else {
+					if (parent?.children.length! < 2 && activeCardNumber === 1) {
+						const key = setDeckKey()
+						let currentCard = stackFaceUp.pop()!
+						dataDeck[key] = [...dataDeck[key], currentCard]
+						dataDeck = dataDeck
+						stackFaceUp = stackFaceUp
+					} else if (
+						lastChildElementColor === activeCardColor &&
+						lastChildElementNumber + 1 === activeCardNumber
+					) {
+						const key = setDeckKey()
+						let currentCard = stackFaceUp.pop()!
+						dataDeck[key] = [...dataDeck[key], currentCard]
+						dataDeck = dataDeck
+						stackFaceUp = stackFaceUp
+					}
+				}
+			}
+		} else {
+			if (parentIndex < 7) {
+				if (
+					lastChildElementColor !== activeCardColor &&
+					isTrue(activeCardNumber, lastChildElementNumber)
+				) {
+					let currentCard =
+						stackingRow[activeCardParentIndex].faceUp.slice(activeCardIndex)
+					stackingRow[parentIndex].faceUp = [
+						...stackingRow[parentIndex].faceUp,
+						...currentCard,
+					]
+					stackingRow[activeCardParentIndex].faceUp.splice(activeCardIndex)
+					stackingRow = stackingRow
+				}
+			} else {
+				if (parent?.children.length! < 2 && activeCardNumber === 1) {
+					const key = setDeckKey()
+					let currentCard = stackingRow[activeCardParentIndex].faceUp.pop()!
+					dataDeck[key] = [...dataDeck[key], currentCard]
+					dataDeck = dataDeck
+					stackingRow = stackingRow
+				} else if (
+					lastChildElementColor === activeCardColor &&
+					lastChildElementNumber + 1 === activeCardNumber
+				) {
+					const key = setDeckKey()
+					let currentCard = stackingRow[activeCardParentIndex].faceUp.pop()!
+					dataDeck[key] = [...dataDeck[key], currentCard]
+					dataDeck = dataDeck
+					stackingRow = stackingRow
+				}
+				return
+			}
+		}
+	}
+
 	function setCardFaceDown(arrLenght: number) {
 		for (let index = 0; index < arrLenght; index++) {
 			let randomNumber = Math.floor(Math.random() * (52 - 7 - arrLenght))
 			stackingRow[arrLenght].faceDown.push(Cards[randomNumber])
+			// dataCards.removeCard(randomNumber)
 			Cards.splice(randomNumber, 1)
 		}
 	}
 	function startGame() {
+		const spliceArr = <number[]>[]
 		for (let index = 0; index < 7; index++) {
 			let randomNumber = Math.floor(Math.random() * 52)
+			if (spliceArr.includes(randomNumber, 0)) {
+				randomNumber = Math.floor(Math.random() * 52)
+			}
+			spliceArr.push(randomNumber)
 			stackingRow[index].faceUp.push(Cards[randomNumber])
-			Cards.splice(randomNumber, 1)
 		}
-		setCardFaceDown(1)
-		setCardFaceDown(2)
-		setCardFaceDown(3)
-		setCardFaceDown(4)
-		setCardFaceDown(5)
-		setCardFaceDown(6)
+		for (let index = 0; index < spliceArr.length; index++) {
+			const element = spliceArr[index]
+			// dataCards.removeCard(element)
+			Cards.splice(element, 1)
+		}
+		for (let index = 1; index < 7; index++) {
+			setCardFaceDown(index)
+		}
+		Cards.sort(() => (Math.random() > 0.5 ? 1 : -1))
 	}
 	startGame()
 
@@ -120,49 +306,83 @@
 	let design = "bg-white relative rounded-lg cursor-default"
 
 	function revealCard(ev: MouseEvent) {
-		const element = Cards.pop()!
-		stackFaceUp.push(element)
-		stackFaceUp = stackFaceUp
+		if (Cards.length === 0) {
+			Cards = [...stackFaceUp]
+			Cards = Cards
+			stackFaceUp = <Array<card>>[]
+			stackFaceUp = stackFaceUp
+		} else {
+			const element = Cards.pop()!
+			stackFaceUp.push(element)
+			Cards = Cards
+			stackFaceUp = stackFaceUp
+		}
 	}
 	function keyBoardReveal(ev: KeyboardEvent) {}
+	function alignElements(element: HTMLDivElement) {
+		const length = element.children.length
+		const adjLength = length - 1
+		const newHeight = adjLength * offsetTop + height
+		element.style.height = newHeight.toString() + "px"
+		for (let index = 0; index < length; index++) {
+			const top = (index - 1) * offsetTop
+			const ele = element.children[index] as HTMLDivElement
+			if (index > 0) {
+				ele.style.top = top.toString() + "px"
+				ele.style.position = "absolute"
+			}
+		}
+	}
 	onMount(() => {
 		const containingBlock = document.querySelectorAll(".containing_block")
-		containingBlock.forEach((block) => {
-			let ele = block as HTMLElement
-			const length = block.children.length
-			const adjLength = length - 1
-			const newHeight = adjLength * offsetTop + height
-			ele.style.height = newHeight.toString() + "px"
-			for (let index = 0; index < length; index++) {
-				const top = (index - 1) * offsetTop
-				const element = block.children[index] as HTMLDivElement
-				if (index > 0) {
-					element.style.top = top.toString() + "px"
-					element.style.position = "absolute"
-				}
-			}
+		containingBlock.forEach((ele) => {
+			const block = ele as HTMLDivElement
+			alignElements(block)
 		})
+	})
+	beforeUpdate(() => {
+		const containingBlock = document.querySelectorAll(".containing_block")
+		if (parentIn) {
+			setTimeout(() => {
+				const dataGame = containingBlock[parentIn] as HTMLDivElement
+				alignElements(dataGame)
+			}, 10)
+		}
 	})
 </script>
 
 <main
 	on:dragover={dragOver}
 	role="application"
-	class="min-h-screen w-screen py-20 overflow-hidden"
+	class="min-h-screen w-screen py-6 overflow-hidden"
 >
 	<div class="w-5/6 mx-auto grid gap-4 gap-y-12 grid-cols-7">
 		<div data-deck class="relative col-start-1 col-end-2 row-start-1 row-end-2">
-			<div
-				role="button"
-				tabindex="0"
-				on:click={revealCard}
-				on:keydown={keyBoardReveal}
-			>
-				<CardFaceDown {dimensions} />
-			</div>
+			{#if Cards.length === 0}
+				<div
+					role="button"
+					tabindex="0"
+					on:click={revealCard}
+					on:keydown={keyBoardReveal}
+					class="relative {dimensions} border-2 border-white cursor-pointer rounded-lg before:content-[''] before:absolute before:w-1/2 before:aspect-square before:border-2
+					before:rounded-full before:border-white before:inset-0
+					before:mx-auto
+					before:top-1/2
+					before:-translate-y-1/2 before:bg-transparent"
+				></div>
+			{:else}
+				<div
+					role="button"
+					tabindex="0"
+					on:click={revealCard}
+					on:keydown={keyBoardReveal}
+				>
+					<CardFaceDown {dimensions} />
+				</div>
+			{/if}
 		</div>
 		<div
-			data-deck-revealed
+			data-stack-faceup
 			class="relative col-start-2 col-end-3 row-start-1 row-end-2"
 		>
 			{#each stackFaceUp as card, index}
@@ -170,6 +390,8 @@
 					<div
 						data-card={cardNumber(card?.card)}
 						data-type={cardType(card?.component)}
+						data-color={cardColor(card?.component)}
+						data-index={index}
 						draggable="true"
 						role="application"
 						on:dragstart={dragStart}
@@ -184,6 +406,8 @@
 					<div
 						data-card={cardNumber(card?.card)}
 						data-type={cardType(card?.component)}
+						data-color={cardColor(card?.component)}
+						data-index={index}
 						draggable="true"
 						role="application"
 						on:dragstart={dragStart}
@@ -198,6 +422,8 @@
 					<div
 						data-card={cardNumber(card?.card)}
 						data-type={cardType(card?.component)}
+						data-color={cardColor(card?.component)}
+						data-index={index}
 						draggable="true"
 						role="application"
 						on:dragstart={dragStart}
@@ -211,7 +437,7 @@
 			{/each}
 		</div>
 		<div
-			data-stack="1"
+			data-game="7"
 			class="relative h-[200px] col-start-4 col-end-5 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
 		>
 			<div
@@ -221,9 +447,27 @@
 				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 			>
 			</div>
+			{#each dataDeck.dataDeckOne as card, index}
+				{#if index === dataDeck.dataDeckOne.length - 1}
+					<div
+						data-card={cardNumber(card?.card)}
+						data-type={cardType(card?.component)}
+						data-color={cardColor(card?.component)}
+						data-index={index}
+						draggable="true"
+						role="application"
+						on:dragstart={dragStart}
+						on:drag={drag}
+						on:dragend={dragEnd}
+						class="{dimensions} {design}"
+					>
+						<Placeholder {card} />
+					</div>
+				{/if}
+			{/each}
 		</div>
 		<div
-			data-stack="2"
+			data-game="8"
 			class="relative h-[200px] col-start-5 col-end-6 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
 		>
 			<div
@@ -233,9 +477,27 @@
 				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 			>
 			</div>
+			{#each dataDeck.dataDeckTwo as card, index}
+				{#if index === dataDeck.dataDeckTwo.length - 1}
+					<div
+						data-card={cardNumber(card?.card)}
+						data-type={cardType(card?.component)}
+						data-color={cardColor(card?.component)}
+						data-index={index}
+						draggable="true"
+						role="application"
+						on:dragstart={dragStart}
+						on:drag={drag}
+						on:dragend={dragEnd}
+						class="{dimensions} {design}"
+					>
+						<Placeholder {card} />
+					</div>
+				{/if}
+			{/each}
 		</div>
 		<div
-			data-stack="3"
+			data-game="9"
 			class="relative w-full h-[200px] col-start-6 col-end-7 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
 		>
 			<div
@@ -245,9 +507,27 @@
 				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 			>
 			</div>
+			{#each dataDeck.dataDeckThree as card, index}
+				{#if index === dataDeck.dataDeckThree.length - 1}
+					<div
+						data-card={cardNumber(card?.card)}
+						data-type={cardType(card?.component)}
+						data-color={cardColor(card?.component)}
+						data-index={index}
+						draggable="true"
+						role="application"
+						on:dragstart={dragStart}
+						on:drag={drag}
+						on:dragend={dragEnd}
+						class="{dimensions} {design}"
+					>
+						<Placeholder {card} />
+					</div>
+				{/if}
+			{/each}
 		</div>
 		<div
-			data-stack="4"
+			data-game="10"
 			class="relative h-[200px] col-start-7 col-end-8 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
 		>
 			<div
@@ -257,6 +537,24 @@
 				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 			>
 			</div>
+			{#each dataDeck.dataDeckFour as card, index}
+				{#if index === dataDeck.dataDeckFour.length - 1}
+					<div
+						data-card={cardNumber(card?.card)}
+						data-type={cardType(card?.component)}
+						data-color={cardColor(card?.component)}
+						data-index={index}
+						draggable="true"
+						role="application"
+						on:dragstart={dragStart}
+						on:drag={drag}
+						on:dragend={dragEnd}
+						class="{dimensions} {design}"
+					>
+						<Placeholder {card} />
+					</div>
+				{/if}
+			{/each}
 		</div>
 		<div
 			data-game="0"
@@ -268,10 +566,12 @@
 				class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 			>
 			</div>
-			{#each stackingRow[0].faceUp as card}
+			{#each stackingRow[0].faceUp as card, index}
 				<div
 					data-card={cardNumber(card?.card)}
 					data-type={cardType(card?.component)}
+					data-color={cardColor(card?.component)}
+					data-index={index}
 					draggable="true"
 					role="application"
 					on:dragstart={dragStart}
@@ -297,10 +597,12 @@
 			{#each stackingRow[1].faceDown as _}
 				<CardFaceDown {dimensions} />
 			{/each}
-			{#each stackingRow[1].faceUp as card}
+			{#each stackingRow[1].faceUp as card, index}
 				<div
 					data-card={cardNumber(card?.card)}
 					data-type={cardType(card?.component)}
+					data-color={cardColor(card?.component)}
+					data-index={index}
 					draggable="true"
 					role="application"
 					on:dragstart={dragStart}
@@ -326,10 +628,12 @@
 			{#each stackingRow[2].faceDown as _}
 				<CardFaceDown {dimensions} />
 			{/each}
-			{#each stackingRow[2].faceUp as card}
+			{#each stackingRow[2].faceUp as card, index}
 				<div
 					data-card={cardNumber(card?.card)}
 					data-type={cardType(card?.component)}
+					data-color={cardColor(card?.component)}
+					data-index={index}
 					draggable="true"
 					role="application"
 					on:dragstart={dragStart}
@@ -355,10 +659,12 @@
 			{#each stackingRow[3].faceDown as _}
 				<CardFaceDown {dimensions} />
 			{/each}
-			{#each stackingRow[3].faceUp as card}
+			{#each stackingRow[3].faceUp as card, index}
 				<div
 					data-card={cardNumber(card?.card)}
 					data-type={cardType(card?.component)}
+					data-color={cardColor(card?.component)}
+					data-index={index}
 					draggable="true"
 					role="application"
 					on:dragstart={dragStart}
@@ -384,10 +690,12 @@
 			{#each stackingRow[4].faceDown as _}
 				<CardFaceDown {dimensions} />
 			{/each}
-			{#each stackingRow[4].faceUp as card}
+			{#each stackingRow[4].faceUp as card, index}
 				<div
 					data-card={cardNumber(card?.card)}
 					data-type={cardType(card?.component)}
+					data-color={cardColor(card?.component)}
+					data-index={index}
 					draggable="true"
 					role="application"
 					on:dragstart={dragStart}
@@ -412,10 +720,12 @@
 			{#each stackingRow[5].faceDown as _}
 				<CardFaceDown {dimensions} />
 			{/each}
-			{#each stackingRow[5].faceUp as card}
+			{#each stackingRow[5].faceUp as card, index}
 				<div
-					data-card={cardNumber(card.card)}
-					data-type={cardType(card.component)}
+					data-card={cardNumber(card?.card)}
+					data-type={cardType(card?.component)}
+					data-color={cardColor(card?.component)}
+					data-index={index}
 					draggable="true"
 					role="application"
 					on:dragstart={dragStart}
@@ -441,10 +751,12 @@
 			{#each stackingRow[6].faceDown as _}
 				<CardFaceDown {dimensions} />
 			{/each}
-			{#each stackingRow[6].faceUp as card}
+			{#each stackingRow[6].faceUp as card, index}
 				<div
 					data-card={cardNumber(card?.card)}
 					data-type={cardType(card?.component)}
+					data-color={cardColor(card?.component)}
+					data-index={index}
 					draggable="true"
 					role="application"
 					on:dragstart={dragStart}
