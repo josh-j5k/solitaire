@@ -108,10 +108,10 @@
 	let activeCardColor: string
 	let activeCardParentIndex: number
 	let activeCardIndex: number
+	let activeCardType: string
 	let dataStackFace = false
 	let validMove = false
 	let top: string
-
 	function dragStart(e: DragEvent) {
 		const element = e.target as HTMLDivElement
 		const parent = element.parentElement?.getAttribute("data-game")
@@ -138,9 +138,8 @@
 		activeCard = element.getAttribute("data-type")!
 		activeCardNumber = parseInt(element.getAttribute("data-card")!)
 		activeCardColor = element.getAttribute("data-color")!
-		// e.dataTransfer?.setData("text/plain", element.id)
+		activeCardType = element.getAttribute("data-type")!
 		e.dataTransfer?.setDragImage(img, 0, 0)
-		console.log(dataStackFace)
 	}
 	function dragOver(e: DragEvent) {
 		e.preventDefault()
@@ -155,22 +154,49 @@
 			zone.classList.add("show")
 		})
 		const element = e.target as HTMLDivElement
-		element.classList.add("dragging")
 		const parent = element.offsetParent as HTMLDivElement
+		const currentIndex = element.getAttribute("data-index")!
+		const indices = parent.querySelectorAll("div[data-index]")
+		element.classList.add("dragging")
 		let centerX = e.clientX - parent.offsetLeft - eleWidth
 		let centerY = e.clientY - parent.offsetTop - eleHeight + offsetTop
 		element.style.transform = `translateX(${centerX.toString()}px) translateY(${centerY.toString()}px)`
-		console.log(dataStackFace, "dragging")
+		for (let index = 0; index < indices.length; index++) {
+			const element = indices[index] as HTMLDivElement
+			if (index > parseInt(currentIndex)) {
+				element.classList.add("dragging")
+				let centerX = e.clientX - parent.offsetLeft - eleWidth
+				let centerY = e.clientY - parent.offsetTop - height + 50
+				element.style.transform = `translateX(${centerX.toString()}px) translateY(${centerY.toString()}px)`
+			}
+		}
+
+		// indices.forEach((item, index) => {
+		// 	if (index > parseInt(currentIndex)) {
+		// 		const siblingElement = item as HTMLDivElement
+		// 		siblingElement.classList.add("dragging")
+		// 		const ind = offsetTop * (index + 2)
+		// 		let centerX = e.clientX - parent.offsetLeft - eleWidth
+		// 		let centerY = e.clientY - parent.offsetTop - height + ind
+		// 		siblingElement.style.transform = `translateX(${centerX.toString()}px) translateY(${centerY.toString()}px)`
+		// 	}
+		// })
 	}
-	function dragEnd(e: DragEvent) {
+	function resetZIndex() {
 		const dragoverZone = document.querySelectorAll(".dragover_zone")
-		const element = e.target as HTMLDivElement
-		element.style.transform = "translate(0)"
-		element.classList.remove("dragging")
 		dragoverZone.forEach((zone) => {
 			zone.classList.remove("show")
 		})
+	}
+	function dragEnd(e: DragEvent) {
+		const element = e.target as HTMLDivElement
+		element.style.transform = "translate(0)"
+		element.classList.remove("dragging")
 		element.style.top = top
+		if (dataStackFace) {
+			element.classList.add("stack_face_up")
+		}
+		resetZIndex()
 	}
 	let parentIn: number
 	function drop(e: DragEvent) {
@@ -180,7 +206,7 @@
 
 		const lastChildElementIndex = parent?.children.length! - 1
 		const lastChildElement = parent?.children[lastChildElementIndex]
-		// const lastChildElementType = lastChildElement?.getAttribute('data-type')
+		const lastChildElementType = lastChildElement?.getAttribute("data-type")
 		const lastChildElementNumber = parseInt(
 			lastChildElement?.getAttribute("data-card")!
 		)
@@ -203,102 +229,112 @@
 			return
 		}
 		parentIn = parentIndex
-		if (dataStackFace) {
-			if (parentIndex < 7) {
-				if (
-					lastChildElementColor !== activeCardColor &&
-					isTrue(activeCardNumber, lastChildElementNumber)
-				) {
-					let currentCard = stackFaceUp.pop()!
-					stackingRow[parentIndex].faceUp = [
-						...stackingRow[parentIndex].faceUp,
-						currentCard,
-					]
-					stackingRow = stackingRow
-					stackFaceUp = stackFaceUp
-				} else {
-					if (parent?.children.length! < 2 && activeCardNumber === 1) {
-						const key = setDeckKey()
-						let currentCard = stackFaceUp.pop()!
-						dataDeck[key] = [...dataDeck[key], currentCard]
-						dataDeck = dataDeck
-						stackFaceUp = stackFaceUp
-					} else if (
-						lastChildElementColor === activeCardColor &&
-						lastChildElementNumber + 1 === activeCardNumber
-					) {
-						const key = setDeckKey()
-						let currentCard = stackFaceUp.pop()!
-						dataDeck[key] = [...dataDeck[key], currentCard]
-						dataDeck = dataDeck
-						stackFaceUp = stackFaceUp
-					}
-				}
+		if (dataStackFace && parentIndex < 7) {
+			if (
+				lastChildElementColor !== activeCardColor &&
+				isTrue(activeCardNumber, lastChildElementNumber)
+			) {
+				let currentCard = stackFaceUp.pop()!
+				stackingRow[parentIndex].faceUp = [
+					...stackingRow[parentIndex].faceUp,
+					currentCard,
+				]
+				stackingRow = stackingRow
+				stackFaceUp = stackFaceUp
+			} else if (parent?.children.length! < 2 && activeCardNumber === 13) {
+				let currentCard = stackFaceUp.pop()!
+				stackingRow[parentIndex].faceUp = [
+					...stackingRow[parentIndex].faceUp,
+					currentCard,
+				]
+				stackingRow = stackingRow
+				stackFaceUp = stackFaceUp
 			}
-		} else {
-			if (parentIndex < 7) {
-				if (
-					lastChildElementColor !== activeCardColor &&
-					isTrue(activeCardNumber, lastChildElementNumber)
-				) {
-					let currentCard =
-						stackingRow[activeCardParentIndex].faceUp.slice(activeCardIndex)
-					stackingRow[parentIndex].faceUp = [
-						...stackingRow[parentIndex].faceUp,
-						...currentCard,
-					]
-					stackingRow[activeCardParentIndex].faceUp.splice(activeCardIndex)
-					stackingRow = stackingRow
-				}
-			} else {
-				if (parent?.children.length! < 2 && activeCardNumber === 1) {
-					const key = setDeckKey()
-					let currentCard = stackingRow[activeCardParentIndex].faceUp.pop()!
-					dataDeck[key] = [...dataDeck[key], currentCard]
-					dataDeck = dataDeck
-					stackingRow = stackingRow
-				} else if (
-					lastChildElementColor === activeCardColor &&
-					lastChildElementNumber + 1 === activeCardNumber
-				) {
-					const key = setDeckKey()
-					let currentCard = stackingRow[activeCardParentIndex].faceUp.pop()!
-					dataDeck[key] = [...dataDeck[key], currentCard]
-					dataDeck = dataDeck
-					stackingRow = stackingRow
-				}
+		} else if (dataStackFace && parentIndex >= 7) {
+			if (parent?.children.length! < 2 && activeCardNumber === 1) {
+				const key = setDeckKey()
+				let currentCard = stackFaceUp.pop()!
+				dataDeck[key] = [...dataDeck[key], currentCard]
+				dataDeck = dataDeck
+				stackFaceUp = stackFaceUp
+			} else if (
+				lastChildElementType === activeCardType &&
+				lastChildElementNumber + 1 === activeCardNumber
+			) {
+				const key = setDeckKey()
+				let currentCard = stackFaceUp.pop()!
+				dataDeck[key] = [...dataDeck[key], currentCard]
+				dataDeck = dataDeck
+				stackFaceUp = stackFaceUp
+			}
+		} else if (!dataStackFace && parentIndex >= 7) {
+			if (
+				activeCardIndex !==
+				stackingRow[activeCardParentIndex].faceUp.length - 1
+			) {
 				return
 			}
+			if (parent?.children.length! < 2 && activeCardNumber === 1) {
+				const key = setDeckKey()
+				let currentCard = stackingRow[activeCardParentIndex].faceUp.pop()!
+				dataDeck[key] = [...dataDeck[key], currentCard]
+				dataDeck = dataDeck
+				stackingRow = stackingRow
+			} else if (
+				lastChildElementType === activeCardType &&
+				lastChildElementNumber + 1 === activeCardNumber
+			) {
+				const key = setDeckKey()
+				let currentCard = stackingRow[activeCardParentIndex].faceUp.pop()!
+				dataDeck[key] = [...dataDeck[key], currentCard]
+				dataDeck = dataDeck
+				stackingRow = stackingRow
+			}
+		} else if (!dataStackFace && parentIndex < 7) {
+			if (
+				lastChildElementColor !== activeCardColor &&
+				isTrue(activeCardNumber, lastChildElementNumber)
+			) {
+				let currentCard =
+					stackingRow[activeCardParentIndex].faceUp.slice(activeCardIndex)
+				stackingRow[parentIndex].faceUp = [
+					...stackingRow[parentIndex].faceUp,
+					...currentCard,
+				]
+				stackingRow[activeCardParentIndex].faceUp.splice(activeCardIndex)
+				stackingRow = stackingRow
+			} else if (parent?.children.length! < 2 && activeCardNumber === 13) {
+				let currentCard =
+					stackingRow[activeCardParentIndex].faceUp.slice(activeCardIndex)
+				stackingRow[parentIndex].faceUp = [
+					...stackingRow[parentIndex].faceUp,
+					...currentCard,
+				]
+				stackingRow[activeCardParentIndex].faceUp.splice(activeCardIndex)
+				stackingRow = stackingRow
+			}
 		}
+		resetZIndex()
 	}
 
 	function setCardFaceDown(arrLenght: number) {
 		for (let index = 0; index < arrLenght; index++) {
 			let randomNumber = Math.floor(Math.random() * (52 - 7 - arrLenght))
 			stackingRow[arrLenght].faceDown.push(Cards[randomNumber])
-			// dataCards.removeCard(randomNumber)
 			Cards.splice(randomNumber, 1)
 		}
 	}
 	function startGame() {
-		const spliceArr = <number[]>[]
 		for (let index = 0; index < 7; index++) {
-			let randomNumber = Math.floor(Math.random() * 52)
-			if (spliceArr.includes(randomNumber, 0)) {
-				randomNumber = Math.floor(Math.random() * 52)
-			}
-			spliceArr.push(randomNumber)
+			let randomNumber = Math.floor(Math.random() * (52 - index))
 			stackingRow[index].faceUp.push(Cards[randomNumber])
+			Cards.splice(randomNumber, 1)
 		}
-		for (let index = 0; index < spliceArr.length; index++) {
-			const element = spliceArr[index]
-			// dataCards.removeCard(element)
-			Cards.splice(element, 1)
-		}
+
+		Cards.sort(() => (Math.random() > 0.5 ? 1 : -1))
 		for (let index = 1; index < 7; index++) {
 			setCardFaceDown(index)
 		}
-		Cards.sort(() => (Math.random() > 0.5 ? 1 : -1))
 	}
 	startGame()
 
@@ -386,53 +422,104 @@
 			class="relative col-start-2 col-end-3 row-start-1 row-end-2"
 		>
 			{#each stackFaceUp as card, index}
-				{#if (stackFaceUp.length > 3 && index === stackFaceUp.length - 3) || index === 0}
-					<div
-						data-card={cardNumber(card?.card)}
-						data-type={cardType(card?.component)}
-						data-color={cardColor(card?.component)}
-						data-index={index}
-						draggable="true"
-						role="application"
-						on:dragstart={dragStart}
-						on:drag={drag}
-						on:dragend={dragEnd}
-						class="{dimensions} {design} dragged top-0 stack_face_up"
-					>
-						<Placeholder {card} />
-					</div>
-				{/if}
-				{#if (stackFaceUp.length > 3 && index === stackFaceUp.length - 2) || index === 1}
-					<div
-						data-card={cardNumber(card?.card)}
-						data-type={cardType(card?.component)}
-						data-color={cardColor(card?.component)}
-						data-index={index}
-						draggable="true"
-						role="application"
-						on:dragstart={dragStart}
-						on:drag={drag}
-						on:dragend={dragEnd}
-						class="{dimensions} {design} dragged top-0 left-6 stack_face_up"
-					>
-						<Placeholder {card} />
-					</div>
-				{/if}
-				{#if (stackFaceUp.length > 3 && index === stackFaceUp.length - 1) || index === 2}
-					<div
-						data-card={cardNumber(card?.card)}
-						data-type={cardType(card?.component)}
-						data-color={cardColor(card?.component)}
-						data-index={index}
-						draggable="true"
-						role="application"
-						on:dragstart={dragStart}
-						on:drag={drag}
-						on:dragend={dragEnd}
-						class="{dimensions} {design} dragged top-0 left-12 stack_face_up"
-					>
-						<Placeholder {card} />
-					</div>
+				{#if stackFaceUp.length <= 3}
+					{#if index === 0}
+						<div
+							data-card={cardNumber(card?.card)}
+							data-type={cardType(card?.component)}
+							data-color={cardColor(card?.component)}
+							data-index={index}
+							draggable="true"
+							role="application"
+							on:dragstart={dragStart}
+							on:drag={drag}
+							on:dragend={dragEnd}
+							class="{dimensions} {design} dragged top-0 stack_face_up"
+						>
+							<Placeholder {card} />
+						</div>
+					{/if}
+					{#if index === 1}
+						<div
+							data-card={cardNumber(card?.card)}
+							data-type={cardType(card?.component)}
+							data-color={cardColor(card?.component)}
+							data-index={index}
+							draggable="true"
+							role="application"
+							on:dragstart={dragStart}
+							on:drag={drag}
+							on:dragend={dragEnd}
+							class="{dimensions} {design} dragged top-0 left-6 stack_face_up"
+						>
+							<Placeholder {card} />
+						</div>
+					{/if}
+					{#if index === 2}
+						<div
+							data-card={cardNumber(card?.card)}
+							data-type={cardType(card?.component)}
+							data-color={cardColor(card?.component)}
+							data-index={index}
+							draggable="true"
+							role="application"
+							on:dragstart={dragStart}
+							on:drag={drag}
+							on:dragend={dragEnd}
+							class="{dimensions} {design} dragged top-0 left-12 stack_face_up"
+						>
+							<Placeholder {card} />
+						</div>
+					{/if}
+				{:else}
+					{#if index === stackFaceUp.length - 3}
+						<div
+							data-card={cardNumber(card?.card)}
+							data-type={cardType(card?.component)}
+							data-color={cardColor(card?.component)}
+							data-index={index}
+							draggable="true"
+							role="application"
+							on:dragstart={dragStart}
+							on:drag={drag}
+							on:dragend={dragEnd}
+							class="{dimensions} {design} dragged top-0 stack_face_up"
+						>
+							<Placeholder {card} />
+						</div>
+					{/if}
+					{#if index === stackFaceUp.length - 2}
+						<div
+							data-card={cardNumber(card?.card)}
+							data-type={cardType(card?.component)}
+							data-color={cardColor(card?.component)}
+							data-index={index}
+							draggable="true"
+							role="application"
+							on:dragstart={dragStart}
+							on:drag={drag}
+							on:dragend={dragEnd}
+							class="{dimensions} {design} dragged top-0 left-6 stack_face_up"
+						>
+							<Placeholder {card} />
+						</div>
+					{/if}
+					{#if index === stackFaceUp.length - 1}
+						<div
+							data-card={cardNumber(card?.card)}
+							data-type={cardType(card?.component)}
+							data-color={cardColor(card?.component)}
+							data-index={index}
+							draggable="true"
+							role="application"
+							on:dragstart={dragStart}
+							on:drag={drag}
+							on:dragend={dragEnd}
+							class="{dimensions} {design} dragged top-0 left-12 stack_face_up"
+						>
+							<Placeholder {card} />
+						</div>
+					{/if}
 				{/if}
 			{/each}
 		</div>
