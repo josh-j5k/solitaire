@@ -93,8 +93,7 @@ export function useMain() {
     const Rows = {
         getStackingRow: (): row[] => stackingRow,
         updateStackingRow: (rowUpdatedValue: number, newValue: card[] | card): void => {
-            console.log('from stackingRow');
-            console.log(stackingRow[rowUpdatedValue].faceUp);
+
             stackingRow = stackingRow
 
             if (Array.isArray(newValue)) {
@@ -103,14 +102,15 @@ export function useMain() {
             else {
                 stackingRow[rowUpdatedValue].faceUp = [...stackingRow[rowUpdatedValue].faceUp, newValue]
             }
-            console.log(stackingRow[rowUpdatedValue].faceUp);
+
             stackingRow = stackingRow
 
         },
         removeOldArr: (rowUpdatedValue: number, removeFromIndex: number): void => {
-            stackingRow[rowUpdatedValue].faceUp.pop()
+            stackingRow[rowUpdatedValue].faceUp.splice(removeFromIndex)
+            stackingRow = [...stackingRow]
             stackingRow = stackingRow
-            console.log(stackingRow[rowUpdatedValue].faceUp);
+
         },
         getValue: (rowIndex: number, sliceFromIndex: number): card[] => stackingRow[rowIndex].faceUp.slice(sliceFromIndex)
 

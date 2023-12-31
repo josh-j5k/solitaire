@@ -11,8 +11,8 @@ export type card = {
 }
 
 export type deck = {
-    dataDeckOne: Array<card>,
-    dataDeckTwo: Array<card>,
-    dataDeckThree: Array<card>,
-    dataDeckFour: Array<card>,
+    0: Array<card>,
+    1: Array<card>,
+    2: Array<card>,
+    3: Array<card>,
 }
