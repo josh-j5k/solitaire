@@ -10,9 +10,14 @@ export type card = {
     component: ComponentType
 }
 
-export type deck = {
+export type TFoundation = {
     0: Array<card>,
     1: Array<card>,
     2: Array<card>,
     3: Array<card>,
+}
+
+export type row = {
+    faceDown: card[]
+    faceUp: card[]
 }
