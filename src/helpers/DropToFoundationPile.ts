@@ -1,15 +1,18 @@
 import { type TFoundation, type card, type row } from "../types/Cards"
 
-export function dropToFoundationPile() {
+export function dropToFoundationPile(foundationPileLength: number, activeCardRank: number,
+    activeCardType: string,
+    currentFoundationCardType: string,
+    currentFoundationCardRank: number, activeCardParentIndex: number, foundation: TFoundation, stockPile: card[], tableau: row[]) {
 
-    const dropIfDraggedFromTableau = (key: keyof TFoundation, activeCardParentIndex: number, foundation: TFoundation, tableau: row[]) => {
+    const dropIfDraggedFromTableau = (key: keyof TFoundation) => {
 
         let currentCard = tableau[activeCardParentIndex].faceUp.pop()!
         foundation[key] = [...foundation[key], currentCard]
         foundation = foundation
         tableau = tableau
     }
-    const dropIfDraggedFromWastePile = (key: keyof TFoundation, foundation: TFoundation, stockPile: card[],) => {
+    const dropIfDraggedFromWastePile = (key: keyof TFoundation) => {
         console.log('dropIfDraggedFromWastePile')
 
         let currentCard = stockPile.pop()!
@@ -17,10 +20,7 @@ export function dropToFoundationPile() {
         foundation = foundation
         stockPile = stockPile
     }
-    const dropCardToFoundationPileRules = (foundationPileLength: number, activeCardRank: number,
-        activeCardType: string,
-        currentFoundationCardType: string,
-        currentFoundationCardRank: number,): boolean => {
+    const dropCardToFoundationPileRules = (): boolean => {
 
         if (foundationPileLength < 2 && activeCardRank === 1) {
             return true

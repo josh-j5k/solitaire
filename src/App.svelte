@@ -3,8 +3,8 @@
 	import { onMount, beforeUpdate } from "svelte"
 	import { setCardNameAndNumberAtrribute } from "./helpers/SetCardNameAndNumberAtrribute"
 	import CardFaceDown from "./lib/CardFaceDown.svelte"
-	import { dropToFoundationPile } from "./helpers/DropToFoundationPile"
-	import { dropToTableau } from "./helpers/DropToTableau"
+	import { gameRulesAndLogic } from "./helpers/GameRulesAndLogic"
+
 	import {
 		type card,
 		type cardComponent,
@@ -15,17 +15,7 @@
 	import Club from "./lib/icons/Club.svelte"
 	import Diamond from "./lib/icons/Diamond.svelte"
 	import Heart from "./lib/icons/Heart.svelte"
-	const {
-		dropCardToFoundationPileRules,
-		dropIfDraggedFromTableau,
-		dropIfDraggedFromWastePile,
-	} = dropToFoundationPile()
-	const {
-		dropCardToTableauRules,
-		dropIfFoundationToTableau,
-		dropIfTableauToTableau,
-		dropIfWastePileToTableau,
-	} = dropToTableau()
+
 	const { cardNumber, cardType, cardColor } = setCardNameAndNumberAtrribute()
 	const offsetTop = 25
 
@@ -118,18 +108,86 @@
 	let activeCardIndex: number
 	let isDraggedFromWastePile = false
 	let top: string
-	let topInt: number
 	let left: string
 	let parentIn: number
 	let mouseX: number
 	let mouseY: number
+	let totalCards = 52
+	function setCardFaceDown(number: number) {
+		for (let index = 0; index < number; index++) {
+			let randomNumber = Math.floor(Math.random() * totalCards)
+			tableau[number].faceDown.push(Cards[randomNumber])
+			Cards.splice(randomNumber, 1)
+			totalCards -= 1
+		}
+	}
+	function startGame() {
+		for (let index = 0; index < 7; index++) {
+			let randomNumber = Math.floor(Math.random() * totalCards)
+			tableau[index].faceUp.push(Cards[randomNumber])
+			Cards.splice(randomNumber, 1)
+			totalCards -= 1
+		}
 
+		Cards.sort(() => (Math.random() > 0.5 ? 1 : -1))
+		for (let index = 1; index < 7; index++) {
+			setCardFaceDown(index)
+		}
+	}
+	startGame()
+
+	let dimensions = "w-full" + " h-[" + height.toString() + "px]"
+	let design = "bg-white relative rounded-lg cursor-default"
+
+	function revealAndRedealStockpile() {
+		if (Cards.length === 0) {
+			Cards = stockPile.reverse()
+			Cards = Cards
+			stockPile = <Array<card>>[]
+			stockPile = stockPile
+		} else {
+			const element = Cards.pop()!
+			stockPile.push(element)
+			Cards = Cards
+			stockPile = stockPile
+		}
+	}
+	function flipCard(index: number) {
+		if (
+			tableau[index].faceUp.length === 0 &&
+			tableau[index].faceDown.length > 0
+		) {
+			const containingBlock = document.querySelectorAll(".containing_block")
+			const parent = containingBlock[index] as HTMLDivElement
+			let card = tableau[index].faceDown.pop()!
+
+			tableau[index].faceUp.push(card)
+			tableau = tableau
+			setTimeout(() => {
+				alignElements(parent)
+			}, 0)
+		}
+	}
+	function keyBoardReveal(ev: KeyboardEvent) {}
+	function alignElements(element: HTMLDivElement) {
+		const length = element.children.length
+		const adjLength = length - 1
+		const newHeight = adjLength * offsetTop + height
+
+		element.style.height = newHeight.toString() + "px"
+		for (let index = 1; index < length; index++) {
+			const top = (index - 1) * offsetTop
+			const ele = element.children[index] as HTMLDivElement
+			ele.style.top = top.toString() + "px"
+			ele.style.position = "absolute"
+		}
+	}
 	function dragStart(e: DragEvent) {
 		const element = e.target as HTMLDivElement
 		const parent = <HTMLDivElement>element.parentElement
-		const dataWastePile = element.getAttribute("data-waste-pile")!
-		const foundation = parent?.getAttribute("data-foundation")!
-		const tableau = parent?.getAttribute("data-tableau")!
+		const dataWastePile = element.getAttribute("data-waste-pile")
+		const dataFoundation = parent?.getAttribute("data-foundation")
+		const dataTableau = parent?.getAttribute("data-tableau")
 
 		top = element.style.top
 		left = element.style.left
@@ -138,9 +196,9 @@
 			activeCardParentIndex = -1
 		} else {
 			isDraggedFromWastePile = false
-			foundation
-				? (activeCardParentIndex = parseInt(foundation))
-				: (activeCardParentIndex = parseInt(tableau))
+			dataFoundation
+				? (activeCardParentIndex = parseInt(dataFoundation))
+				: (activeCardParentIndex = parseInt(dataTableau!))
 		}
 
 		activeCardIndex = parseInt(element.getAttribute("data-index")!)
@@ -157,9 +215,9 @@
 		eleWidth = element.clientWidth / 2
 		img.src =
 			"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB0AAABtCAYAAABdsWrOAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAjSURBVGhD7cExAQAAAMKg9U9tCy8gAAAAAAAAAAAAAAAAnmox0QABeT4g9gAAAABJRU5ErkJggg=="
-		activeCard = element.getAttribute("data-type")!
-		activeCardNumber = parseInt(element.getAttribute("data-card")!)
-		activeCardColor = element.getAttribute("data-color")!
+		activeCard = element.getAttribute("data-card-type")!
+		activeCardNumber = parseInt(element.getAttribute("data-card-rank")!)
+		activeCardColor = element.getAttribute("data-card-color")!
 		activeCardElement = element
 		e.dataTransfer?.setDragImage(img, 0, 0)
 	}
@@ -238,11 +296,13 @@
 		const parent = element.parentElement as HTMLDivElement
 		const lastChildElementIndex = parent?.children.length! - 1
 		const lastChildElement = parent?.children[lastChildElementIndex]
-		const lastChildElementType = lastChildElement?.getAttribute("data-type")!
+		const lastChildElementType =
+			lastChildElement?.getAttribute("data-card-type")!
 		const lastChildElementNumber = parseInt(
-			lastChildElement?.getAttribute("data-card")!
+			lastChildElement?.getAttribute("data-card-rank")!
 		)
-		const lastChildElementColor = lastChildElement?.getAttribute("data-color")!
+		const lastChildElementColor =
+			lastChildElement?.getAttribute("data-card-color")!
 		const dataFoundation = parent?.getAttribute("data-foundation")
 		const dataTableau = parent?.getAttribute("data-tableau")
 		let parentIndex: number
@@ -252,6 +312,29 @@
 			parentIndex = parseInt(dataFoundation!)
 		}
 
+		const {
+			dropCardToFoundationPileRules,
+			dropCardToTableauRules,
+			dropIfDraggedFromTableau,
+			dropIfDraggedFromWastePile,
+			dropIfFoundationToTableau,
+			dropIfTableauToTableau,
+			dropIfWastePileToTableau,
+		} = gameRulesAndLogic(
+			parent?.children.length!,
+			activeCardNumber,
+			activeCard,
+			lastChildElementType,
+			lastChildElementColor,
+			activeCardColor,
+			activeCardParentIndex,
+			lastChildElementNumber,
+			activeCardIndex,
+			parentIndex,
+			foundation,
+			stockPile,
+			tableau
+		)
 		const setDropKey = (): keyof TFoundation => parentIndex as keyof TFoundation
 		const dragKey = (): keyof TFoundation =>
 			activeCardParentIndex as keyof TFoundation
@@ -264,172 +347,95 @@
 			return
 		}
 		parentIn = parentIndex
+		console.log(tableau)
 
 		if (isDraggedFromWastePile) {
-			console.log(dataTableau)
+			console.log(
+				activeCard,
+				activeCardNumber,
+				lastChildElementType,
+				lastChildElementNumber,
+				parentIndex,
+				activeCardParentIndex
+			)
+			if (dataTableau && dropCardToTableauRules()) {
+				dropIfWastePileToTableau()
 
-			if (
-				dataTableau &&
-				dropCardToTableauRules(
-					parent?.children.length!,
-					activeCardNumber,
-					lastChildElementColor,
-					activeCardColor,
-					lastChildElementNumber
-				)
-			) {
-				console.log(stockPile, tableau)
-
-				dropIfWastePileToTableau(parentIndex, stockPile, tableau)
-				console.log(stockPile, tableau)
-			} else if (
-				dataFoundation &&
-				dropCardToFoundationPileRules(
-					parent?.children.length!,
-					activeCardNumber,
+				tableau = tableau
+				stockPile = stockPile
+			} else if (dataFoundation && dropCardToFoundationPileRules()) {
+				const key = setDropKey()
+				dropIfDraggedFromWastePile(key)
+				console.log(
 					activeCard,
+					activeCardNumber,
 					lastChildElementType,
 					lastChildElementNumber
 				)
-			) {
-				const key = setDropKey()
-				console.log("3333333")
-				dropIfDraggedFromWastePile(key, foundation, stockPile)
-			}
-		} else {
-			if (
-				dataTableau &&
-				activeCardElement.parentElement?.hasAttribute("data-foundation")
-			) {
-				const key = dragKey()
-
-				console.log("44444444444")
-				dropIfFoundationToTableau(key, foundation, parentIndex, tableau)
-			} else if (
-				dataTableau &&
-				dropCardToTableauRules(
-					parent?.children.length!,
-					activeCardNumber,
-					lastChildElementColor,
-					activeCardColor,
-					lastChildElementNumber
-				)
-			) {
-				console.log("5555555555")
-				dropIfTableauToTableau(
-					activeCardParentIndex,
-					activeCardNumber,
-					parentIndex,
-					tableau
-				)
-			} else if (
-				dataFoundation &&
-				dropCardToFoundationPileRules(
-					parent?.children.length!,
-					activeCardNumber,
-					activeCard,
-					lastChildElementType,
-					lastChildElementNumber
-				)
-			) {
-				if (
-					activeCardIndex !==
-					tableau[activeCardParentIndex].faceUp.length - 1
-				) {
-					return
-				}
-				const key = setDropKey()
-				dropIfDraggedFromTableau(
-					key,
-					activeCardParentIndex,
-					foundation,
-					tableau
-				)
-			} else if (
-				dataFoundation &&
-				parent.hasAttribute("data-foundation") &&
-				activeCardElement.parentElement?.hasAttribute("data-foundation")
-			) {
-				const key = setDropKey()
-				const activeKey = dragKey()
-				let currentCard = foundation[activeKey].pop()!
-				foundation[key] = [...foundation[key], currentCard]
+				stockPile = stockPile
 				foundation = foundation
 			}
+			return
+		}
+		console.log(
+			activeCard,
+			activeCardNumber,
+			lastChildElementType,
+			lastChildElementNumber,
+			parentIndex,
+			activeCardParentIndex
+		)
+		if (
+			dataTableau &&
+			activeCardElement.parentElement?.hasAttribute("data-foundation")
+		) {
+			const key = dragKey()
+			dropIfFoundationToTableau(key)
+			tableau = tableau
+			foundation = foundation
+		} else if (dataTableau && dropCardToTableauRules()) {
+			dropIfTableauToTableau()
+			flipCard(activeCardParentIndex)
+
+			console.log(
+				activeCard,
+				activeCardNumber,
+				lastChildElementType,
+				lastChildElementNumber
+			)
+		} else if (dataFoundation && dropCardToFoundationPileRules()) {
+			if (
+				activeCardIndex !==
+				tableau[activeCardParentIndex].faceUp.length - 1
+			) {
+				return
+			}
+
+			console.log(
+				activeCard,
+				activeCardNumber,
+				lastChildElementType,
+				lastChildElementNumber
+			)
+			const key = setDropKey()
+			dropIfDraggedFromTableau(key)
+			foundation = foundation
+			flipCard(activeCardParentIndex)
+		} else if (
+			dataFoundation &&
+			parent.hasAttribute("data-foundation") &&
+			activeCardElement.parentElement?.hasAttribute("data-foundation")
+		) {
+			const key = setDropKey()
+			const activeKey = dragKey()
+			let currentCard = foundation[activeKey].pop()!
+			foundation[key] = [...foundation[key], currentCard]
+			foundation = foundation
 		}
 
 		resetZIndex()
 	}
 
-	let totalCards = 52
-	function setCardFaceDown(number: number) {
-		for (let index = 0; index < number; index++) {
-			let randomNumber = Math.floor(Math.random() * totalCards)
-			tableau[number].faceDown.push(Cards[randomNumber])
-			Cards.splice(randomNumber, 1)
-			totalCards -= 1
-		}
-	}
-	function startGame() {
-		for (let index = 0; index < 7; index++) {
-			let randomNumber = Math.floor(Math.random() * totalCards)
-			tableau[index].faceUp.push(Cards[randomNumber])
-			Cards.splice(randomNumber, 1)
-			totalCards -= 1
-		}
-
-		Cards.sort(() => (Math.random() > 0.5 ? 1 : -1))
-		for (let index = 1; index < 7; index++) {
-			setCardFaceDown(index)
-		}
-	}
-	startGame()
-
-	let dimensions = "w-full" + " h-[" + height.toString() + "px]"
-	let design = "bg-white relative rounded-lg cursor-default"
-
-	function revealAndRedealStockpile(ev: MouseEvent) {
-		if (Cards.length === 0) {
-			Cards = stockPile.reverse()
-			Cards = Cards
-			stockPile = <Array<card>>[]
-			stockPile = stockPile
-		} else {
-			const element = Cards.pop()!
-			stockPile.push(element)
-			Cards = Cards
-			stockPile = stockPile
-		}
-	}
-	function flipCard(index: number) {
-		if (
-			tableau[index].faceUp.length === 0 &&
-			tableau[index].faceDown.length > 0
-		) {
-			const containingBlock = document.querySelectorAll(".containing_block")
-			const parent = containingBlock[index] as HTMLDivElement
-
-			let card = tableau[index].faceDown.pop()!
-			tableau[index].faceUp.push(card)
-			setTimeout(() => {
-				alignElements(parent)
-			}, 0)
-		}
-	}
-	function keyBoardReveal(ev: KeyboardEvent) {}
-	function alignElements(element: HTMLDivElement) {
-		const length = element.children.length
-		const adjLength = length - 1
-		const newHeight = adjLength * offsetTop + height
-
-		element.style.height = newHeight.toString() + "px"
-		for (let index = 1; index < length; index++) {
-			const top = (index - 1) * offsetTop
-			const ele = element.children[index] as HTMLDivElement
-			ele.style.top = top.toString() + "px"
-			ele.style.position = "absolute"
-		}
-	}
 	onMount(() => {
 		const containingBlock = document.querySelectorAll(".containing_block")
 		containingBlock.forEach((ele) => {
@@ -500,9 +506,9 @@
 					{#if index === 0}
 						<div
 							data-waste-pile="true"
-							data-card={cardNumber(card?.card)}
-							data-type={cardType(card?.component)}
-							data-color={cardColor(card?.component)}
+							data-card-rank={cardNumber(card?.card)}
+							data-card-type={cardType(card?.component)}
+							data-card-color={cardColor(card?.component)}
 							draggable={draggableOne(stockPile)}
 							role="application"
 							on:dragstart={dragStart}
@@ -516,9 +522,9 @@
 					{#if index === 1}
 						<div
 							data-waste-pile="true"
-							data-card={cardNumber(card?.card)}
-							data-type={cardType(card?.component)}
-							data-color={cardColor(card?.component)}
+							data-card-rank={cardNumber(card?.card)}
+							data-card-type={cardType(card?.component)}
+							data-card-color={cardColor(card?.component)}
 							draggable={draggableTwo(stockPile)}
 							role="application"
 							on:dragstart={dragStart}
@@ -532,9 +538,9 @@
 					{#if index === 2}
 						<div
 							data-waste-pile="true"
-							data-card={cardNumber(card?.card)}
-							data-type={cardType(card?.component)}
-							data-color={cardColor(card?.component)}
+							data-card-rank={cardNumber(card?.card)}
+							data-card-type={cardType(card?.component)}
+							data-card-color={cardColor(card?.component)}
 							draggable="true"
 							role="application"
 							on:dragstart={dragStart}
@@ -549,9 +555,9 @@
 					{#if index === stockPile.length - 3}
 						<div
 							data-waste-pile="true"
-							data-card={cardNumber(card?.card)}
-							data-type={cardType(card?.component)}
-							data-color={cardColor(card?.component)}
+							data-card-rank={cardNumber(card?.card)}
+							data-card-type={cardType(card?.component)}
+							data-card-color={cardColor(card?.component)}
 							draggable={draggableOne(stockPile)}
 							role="application"
 							on:dragstart={dragStart}
@@ -565,9 +571,9 @@
 					{#if index === stockPile.length - 2}
 						<div
 							data-waste-pile="true"
-							data-card={cardNumber(card?.card)}
-							data-type={cardType(card?.component)}
-							data-color={cardColor(card?.component)}
+							data-card-rank={cardNumber(card?.card)}
+							data-card-type={cardType(card?.component)}
+							data-card-color={cardColor(card?.component)}
 							draggable={draggableTwo(stockPile)}
 							role="application"
 							on:dragstart={dragStart}
@@ -581,9 +587,9 @@
 					{#if index === stockPile.length - 1}
 						<div
 							data-waste-pile="true"
-							data-card={cardNumber(card?.card)}
-							data-type={cardType(card?.component)}
-							data-color={cardColor(card?.component)}
+							data-card-rank={cardNumber(card?.card)}
+							data-card-type={cardType(card?.component)}
+							data-card-color={cardColor(card?.component)}
 							draggable="true"
 							role="application"
 							on:dragstart={dragStart}
@@ -611,9 +617,9 @@
 			{#each foundation[0] as card, index}
 				{#if index === foundation[0].length - 2}
 					<div
-						data-card={cardNumber(card?.card)}
-						data-type={cardType(card?.component)}
-						data-color={cardColor(card?.component)}
+						data-card-rank={cardNumber(card?.card)}
+						data-card-type={cardType(card?.component)}
+						data-card-color={cardColor(card?.component)}
 						draggable="true"
 						role="application"
 						on:dragstart={dragStart}
@@ -626,9 +632,9 @@
 				{/if}
 				{#if index === foundation[0].length - 1}
 					<div
-						data-card={cardNumber(card?.card)}
-						data-type={cardType(card?.component)}
-						data-color={cardColor(card?.component)}
+						data-card-rank={cardNumber(card?.card)}
+						data-card-type={cardType(card?.component)}
+						data-card-color={cardColor(card?.component)}
 						draggable="true"
 						role="application"
 						on:dragstart={dragStart}
@@ -655,9 +661,9 @@
 			{#each foundation[1] as card, index}
 				{#if index === foundation[1].length - 2}
 					<div
-						data-card={cardNumber(card?.card)}
-						data-type={cardType(card?.component)}
-						data-color={cardColor(card?.component)}
+						data-card-rank={cardNumber(card?.card)}
+						data-card-type={cardType(card?.component)}
+						data-card-color={cardColor(card?.component)}
 						draggable="true"
 						role="application"
 						on:dragstart={dragStart}
@@ -670,9 +676,9 @@
 				{/if}
 				{#if index === foundation[1].length - 1}
 					<div
-						data-card={cardNumber(card?.card)}
-						data-type={cardType(card?.component)}
-						data-color={cardColor(card?.component)}
+						data-card-rank={cardNumber(card?.card)}
+						data-card-type={cardType(card?.component)}
+						data-card-color={cardColor(card?.component)}
 						draggable="true"
 						role="application"
 						on:dragstart={dragStart}
@@ -699,9 +705,9 @@
 			{#each foundation[2] as card, index}
 				{#if index === foundation[2].length - 2}
 					<div
-						data-card={cardNumber(card?.card)}
-						data-type={cardType(card?.component)}
-						data-color={cardColor(card?.component)}
+						data-card-rank={cardNumber(card?.card)}
+						data-card-type={cardType(card?.component)}
+						data-card-color={cardColor(card?.component)}
 						data-index={index}
 						draggable="true"
 						role="application"
@@ -715,9 +721,9 @@
 				{/if}
 				{#if index === foundation[2].length - 1}
 					<div
-						data-card={cardNumber(card?.card)}
-						data-type={cardType(card?.component)}
-						data-color={cardColor(card?.component)}
+						data-card-rank={cardNumber(card?.card)}
+						data-card-type={cardType(card?.component)}
+						data-card-color={cardColor(card?.component)}
 						data-index={index}
 						draggable="true"
 						role="application"
@@ -745,9 +751,9 @@
 			{#each foundation[3] as card, index}
 				{#if index === foundation[3].length - 2}
 					<div
-						data-card={cardNumber(card?.card)}
-						data-type={cardType(card?.component)}
-						data-color={cardColor(card?.component)}
+						data-card-rank={cardNumber(card?.card)}
+						data-card-type={cardType(card?.component)}
+						data-card-color={cardColor(card?.component)}
 						data-index={index}
 						draggable="true"
 						role="application"
@@ -761,9 +767,9 @@
 				{/if}
 				{#if index === foundation[3].length - 1}
 					<div
-						data-card={cardNumber(card?.card)}
-						data-type={cardType(card?.component)}
-						data-color={cardColor(card?.component)}
+						data-card-rank={cardNumber(card?.card)}
+						data-card-type={cardType(card?.component)}
+						data-card-color={cardColor(card?.component)}
 						data-index={index}
 						draggable="true"
 						role="application"
@@ -789,9 +795,9 @@
 			</div>
 			{#each tableau[0].faceUp as card, index}
 				<div
-					data-card={cardNumber(card?.card)}
-					data-type={cardType(card?.component)}
-					data-color={cardColor(card?.component)}
+					data-card-rank={cardNumber(card?.card)}
+					data-card-type={cardType(card?.component)}
+					data-card-color={cardColor(card?.component)}
 					data-index={index}
 					draggable="true"
 					role="application"
@@ -822,9 +828,9 @@
 			{/each}
 			{#each tableau[1].faceUp as card, index}
 				<div
-					data-card={cardNumber(card?.card)}
-					data-type={cardType(card?.component)}
-					data-color={cardColor(card?.component)}
+					data-card-rank={cardNumber(card?.card)}
+					data-card-type={cardType(card?.component)}
+					data-card-color={cardColor(card?.component)}
 					data-index={index}
 					draggable="true"
 					role="application"
@@ -855,9 +861,9 @@
 			{/each}
 			{#each tableau[2].faceUp as card, index}
 				<div
-					data-card={cardNumber(card?.card)}
-					data-type={cardType(card?.component)}
-					data-color={cardColor(card?.component)}
+					data-card-rank={cardNumber(card?.card)}
+					data-card-type={cardType(card?.component)}
+					data-card-color={cardColor(card?.component)}
 					data-index={index}
 					draggable="true"
 					role="application"
@@ -888,9 +894,9 @@
 			{/each}
 			{#each tableau[3].faceUp as card, index}
 				<div
-					data-card={cardNumber(card?.card)}
-					data-type={cardType(card?.component)}
-					data-color={cardColor(card?.component)}
+					data-card-rank={cardNumber(card?.card)}
+					data-card-type={cardType(card?.component)}
+					data-card-color={cardColor(card?.component)}
 					data-index={index}
 					draggable="true"
 					role="application"
@@ -921,9 +927,9 @@
 			{/each}
 			{#each tableau[4].faceUp as card, index}
 				<div
-					data-card={cardNumber(card?.card)}
-					data-type={cardType(card?.component)}
-					data-color={cardColor(card?.component)}
+					data-card-rank={cardNumber(card?.card)}
+					data-card-type={cardType(card?.component)}
+					data-card-color={cardColor(card?.component)}
 					data-index={index}
 					draggable="true"
 					role="application"
@@ -953,9 +959,9 @@
 			{/each}
 			{#each tableau[5].faceUp as card, index}
 				<div
-					data-card={cardNumber(card?.card)}
-					data-type={cardType(card?.component)}
-					data-color={cardColor(card?.component)}
+					data-card-rank={cardNumber(card?.card)}
+					data-card-type={cardType(card?.component)}
+					data-card-color={cardColor(card?.component)}
 					data-index={index}
 					draggable="true"
 					role="application"
@@ -986,9 +992,9 @@
 			{/each}
 			{#each tableau[6].faceUp as card, index}
 				<div
-					data-card={cardNumber(card?.card)}
-					data-type={cardType(card?.component)}
-					data-color={cardColor(card?.component)}
+					data-card-rank={cardNumber(card?.card)}
+					data-card-type={cardType(card?.component)}
+					data-card-color={cardColor(card?.component)}
 					data-index={index}
 					draggable="true"
 					role="application"

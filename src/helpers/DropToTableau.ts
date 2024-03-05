@@ -1,7 +1,7 @@
 import { type TFoundation, type card, type row } from "../types/Cards"
 
-export function dropToTableau() {
-    function dropIfTableauToTableau(activeCardParentIndex: number, activeCardIndex: number, parentIndex: number, tableau: row[]) {
+export function dropToTableau(foundationPileLength: number, activeCardRank: number, currentTableauCardColor: string, activeCardColor: string, currentTableauCardRank: number, activeCardParentIndex: number, activeCardIndex: number, parentIndex: number, foundation: TFoundation, stockPile: card[], tableau: row[]) {
+    function dropIfTableauToTableau() {
 
         let currentCard =
             tableau[activeCardParentIndex].faceUp.slice(activeCardIndex)
@@ -10,23 +10,21 @@ export function dropToTableau() {
             ...currentCard,
         ]
         tableau[activeCardParentIndex].faceUp.splice(activeCardIndex)
-        tableau = tableau
+
     }
-    function dropIfWastePileToTableau(parentIndex: number, stockPile: card[], tableau: row[]) {
+    function dropIfWastePileToTableau() {
         let currentCard = stockPile.pop()!
         tableau[parentIndex].faceUp.push(currentCard)
 
-        tableau = tableau
-        stockPile = stockPile
+
     }
-    function dropIfFoundationToTableau(key: keyof TFoundation, foundation: TFoundation, parentIndex: number, tableau: row[]) {
+    function dropIfFoundationToTableau(key: keyof TFoundation) {
 
         let currentCard = foundation[key].pop()!
         tableau[parentIndex].faceUp.push(currentCard)
-        tableau = tableau
-        foundation = foundation
+
     }
-    function dropCardToTableauRules(foundationPileLength: number, activeCardRank: number, currentTableauCardColor: string, activeCardColor: string, currentTableauCardRank: number): boolean {
+    function dropCardToTableauRules(): boolean {
 
 
         if (foundationPileLength < 2 && activeCardRank === 13) {
