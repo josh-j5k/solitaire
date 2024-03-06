@@ -7,8 +7,8 @@ export function gameRulesAndLogic(foundationPileLength: number, activeCardRank: 
     currentCardRank: number, activeCardIndex: number, parentIndex: number, foundation: TFoundation, stockPile: card[], tableau: row[]) {
     function dropIfTableauToTableau() {
 
-        let currentCard =
-            tableau[activeCardParentIndex].faceUp.slice(activeCardIndex)
+        let currentCard = tableau[activeCardParentIndex].faceUp.slice(activeCardIndex)
+
         tableau[parentIndex].faceUp = [
             ...tableau[parentIndex].faceUp,
             ...currentCard,

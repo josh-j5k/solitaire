@@ -4,7 +4,11 @@
 	import { setCardNameAndNumberAtrribute } from "./helpers/SetCardNameAndNumberAtrribute"
 	import CardFaceDown from "./lib/CardFaceDown.svelte"
 	import { gameRulesAndLogic } from "./helpers/GameRulesAndLogic"
-
+	// window.addEventListener("contextmenu", (e: MouseEvent) => {
+	// 	if (e.button === 2) {
+	// 		e.preventDefault()
+	// 	}
+	// })
 	import {
 		type card,
 		type cardComponent,
@@ -158,14 +162,17 @@
 			tableau[index].faceDown.length > 0
 		) {
 			const containingBlock = document.querySelectorAll(".containing_block")
-			const parent = containingBlock[index] as HTMLDivElement
-			let card = tableau[index].faceDown.pop()!
-
-			tableau[index].faceUp.push(card)
-			tableau = tableau
 			setTimeout(() => {
+				const parent = containingBlock[index] as HTMLDivElement
+				let card = tableau[index].faceDown.pop()!
+
+				tableau[index].faceUp.push(card)
+				tableau[index] = tableau[index]
+			}, 10)
+			setTimeout(() => {
+				const parent = containingBlock[index] as HTMLDivElement
 				alignElements(parent)
-			}, 0)
+			}, 10)
 		}
 	}
 	function keyBoardReveal(ev: KeyboardEvent) {}
@@ -347,17 +354,8 @@
 			return
 		}
 		parentIn = parentIndex
-		console.log(tableau)
 
 		if (isDraggedFromWastePile) {
-			console.log(
-				activeCard,
-				activeCardNumber,
-				lastChildElementType,
-				lastChildElementNumber,
-				parentIndex,
-				activeCardParentIndex
-			)
 			if (dataTableau && dropCardToTableauRules()) {
 				dropIfWastePileToTableau()
 
@@ -366,43 +364,26 @@
 			} else if (dataFoundation && dropCardToFoundationPileRules()) {
 				const key = setDropKey()
 				dropIfDraggedFromWastePile(key)
-				console.log(
-					activeCard,
-					activeCardNumber,
-					lastChildElementType,
-					lastChildElementNumber
-				)
+
 				stockPile = stockPile
 				foundation = foundation
 			}
 			return
 		}
-		console.log(
-			activeCard,
-			activeCardNumber,
-			lastChildElementType,
-			lastChildElementNumber,
-			parentIndex,
-			activeCardParentIndex
-		)
+
 		if (
 			dataTableau &&
 			activeCardElement.parentElement?.hasAttribute("data-foundation")
 		) {
 			const key = dragKey()
 			dropIfFoundationToTableau(key)
-			tableau = tableau
 			foundation = foundation
+			tableau = tableau
 		} else if (dataTableau && dropCardToTableauRules()) {
 			dropIfTableauToTableau()
+			tableau[activeCardParentIndex] = tableau[activeCardParentIndex]
+			tableau = tableau
 			flipCard(activeCardParentIndex)
-
-			console.log(
-				activeCard,
-				activeCardNumber,
-				lastChildElementType,
-				lastChildElementNumber
-			)
 		} else if (dataFoundation && dropCardToFoundationPileRules()) {
 			if (
 				activeCardIndex !==
@@ -411,15 +392,10 @@
 				return
 			}
 
-			console.log(
-				activeCard,
-				activeCardNumber,
-				lastChildElementType,
-				lastChildElementNumber
-			)
 			const key = setDropKey()
 			dropIfDraggedFromTableau(key)
 			foundation = foundation
+			tableau = tableau
 			flipCard(activeCardParentIndex)
 		} else if (
 			dataFoundation &&
@@ -464,6 +440,10 @@
 			return true
 		}
 		return false
+	}
+	function testme(ev: MouseEvent) {
+		const element = ev.target as HTMLElement
+		element.classList.add("rotate-me")
 	}
 </script>
 
@@ -804,7 +784,7 @@
 					on:dragstart={dragStart}
 					on:drag={drag}
 					on:dragend={dragEnd}
-					class="{dimensions} {design}"
+					class="{dimensions} {design} rotate-me"
 				>
 					<Placeholder {card} />
 				</div>
@@ -1033,5 +1013,16 @@
 		box-shadow:
 			0 -1px 2px rgba(0, 0, 0, 0.2),
 			3px 3px 8px rgba(0, 0, 0, 0.4);
+	}
+	.rotate-me {
+		animation: rotate-me 3000ms ease forwards;
+	}
+	@keyframes rotate-me {
+		from {
+			transform: rotateY(90deg);
+		}
+		to {
+			transform: rotateY(0);
+		}
 	}
 </style>
