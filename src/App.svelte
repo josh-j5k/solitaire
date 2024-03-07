@@ -4,11 +4,7 @@
 	import { setCardNameAndNumberAtrribute } from "./helpers/SetCardNameAndNumberAtrribute"
 	import CardFaceDown from "./lib/CardFaceDown.svelte"
 	import { gameRulesAndLogic } from "./helpers/GameRulesAndLogic"
-	// window.addEventListener("contextmenu", (e: MouseEvent) => {
-	// 	if (e.button === 2) {
-	// 		e.preventDefault()
-	// 	}
-	// })
+
 	import {
 		type card,
 		type cardComponent,
@@ -29,6 +25,22 @@
 		{ component: Heart },
 		{ component: Diamond },
 	]
+	const successAudio = new Audio(
+		"/src/assets/audio/Solitaire Card Game Sound Effects - 108 Solitaire Card Game sounds for SFX projects.m4a"
+	)
+	const dealCard = new Audio(
+		"/src/assets/audio/Solitaire Card Game Sound Effects - 108 Solitaire Card Game sounds for SFX projects_4.m4a"
+	)
+	const dragStartSound = new Audio(
+		"/src/assets/audio/Solitaire Card Game SFX - Page 2_2.m4a"
+	)
+	const dragEndSound = new Audio(
+		"/src/assets/audio/Solitaire Card Game SFX - Page 2_3.m4a"
+	)
+	const dropSound = new Audio(
+		"/src/assets/audio/Solitaire Card Game SFX - Page 2_4.m4a"
+	)
+
 	const arr = [
 		"King",
 		"Ace",
@@ -101,7 +113,7 @@
 		3: <Array<card>>[],
 	}
 
-	const height = 200
+	const height = 180
 	let eleWidth = 0
 	let eleHeight = 0
 	let activeCard: string
@@ -117,6 +129,7 @@
 	let mouseX: number
 	let mouseY: number
 	let totalCards = 52
+
 	function setCardFaceDown(number: number) {
 		for (let index = 0; index < number; index++) {
 			let randomNumber = Math.floor(Math.random() * totalCards)
@@ -154,6 +167,25 @@
 			stockPile.push(element)
 			Cards = Cards
 			stockPile = stockPile
+			dealCard.play()
+			setTimeout(() => {
+				const currentWastePile = document.querySelectorAll(
+					'div[data-waste-pile="true"]'
+				)
+				const wastePileCardPosition = currentWastePile.length - 1
+				const wastePileCard = currentWastePile[wastePileCardPosition]
+				wastePileCard.classList.add("reveal-card")
+			}, 0)
+
+			setTimeout(() => {
+				const currentWastePile = document.querySelectorAll(
+					'div[data-waste-pile="true"]'
+				)
+				const wastePileCardPosition = currentWastePile.length - 1
+				const wastePileCard = currentWastePile[wastePileCardPosition]
+				wastePileCard.classList.remove("reveal-card")
+				wastePileCard.classList.remove("hide-card")
+			}, 800)
 		}
 	}
 	function flipCard(index: number) {
@@ -162,17 +194,24 @@
 			tableau[index].faceDown.length > 0
 		) {
 			const containingBlock = document.querySelectorAll(".containing_block")
+
 			setTimeout(() => {
-				const parent = containingBlock[index] as HTMLDivElement
 				let card = tableau[index].faceDown.pop()!
 
 				tableau[index].faceUp.push(card)
 				tableau[index] = tableau[index]
-			}, 10)
+			}, 100)
 			setTimeout(() => {
 				const parent = containingBlock[index] as HTMLDivElement
+				const element = parent.children[parent.children.length - 1]
 				alignElements(parent)
-			}, 10)
+				element.classList.add("flip-card")
+			}, 100)
+			setTimeout(() => {
+				const parent = containingBlock[index] as HTMLDivElement
+				const element = parent.children[parent.children.length - 1]
+				element.classList.remove("flip-card")
+			}, 1000)
 		}
 	}
 	function keyBoardReveal(ev: KeyboardEvent) {}
@@ -195,7 +234,7 @@
 		const dataWastePile = element.getAttribute("data-waste-pile")
 		const dataFoundation = parent?.getAttribute("data-foundation")
 		const dataTableau = parent?.getAttribute("data-tableau")
-
+		dragStartSound.play()
 		top = element.style.top
 		left = element.style.left
 		if (dataWastePile) {
@@ -267,6 +306,7 @@
 		})
 	}
 	function dragEnd(e: DragEvent) {
+		dragEndSound.play()
 		const element = e.target as HTMLDivElement
 		element.style.transform = "translate(0)"
 		element.classList.remove("dragging")
@@ -342,6 +382,7 @@
 			stockPile,
 			tableau
 		)
+
 		const setDropKey = (): keyof TFoundation => parentIndex as keyof TFoundation
 		const dragKey = (): keyof TFoundation =>
 			activeCardParentIndex as keyof TFoundation
@@ -361,12 +402,30 @@
 
 				tableau = tableau
 				stockPile = stockPile
+				dropSound.play()
+				setTimeout(() => {
+					const elements = document.querySelectorAll(
+						'div[data-waste-pile="true"]'
+					)
+					elements.forEach((ele) => ele.classList.remove("hide-card"))
+				}, 0)
 			} else if (dataFoundation && dropCardToFoundationPileRules()) {
 				const key = setDropKey()
 				dropIfDraggedFromWastePile(key)
 
 				stockPile = stockPile
 				foundation = foundation
+				parent.classList.add("valid-move")
+				successAudio.play()
+				setTimeout(() => {
+					parent.classList.remove("valid-move")
+				}, 800)
+				setTimeout(() => {
+					const elements = document.querySelectorAll(
+						'div[data-waste-pile="true"]'
+					)
+					elements.forEach((ele) => ele.classList.remove("hide-card"))
+				}, 0)
 			}
 			return
 		}
@@ -379,11 +438,13 @@
 			dropIfFoundationToTableau(key)
 			foundation = foundation
 			tableau = tableau
+			dropSound.play()
 		} else if (dataTableau && dropCardToTableauRules()) {
 			dropIfTableauToTableau()
 			tableau[activeCardParentIndex] = tableau[activeCardParentIndex]
 			tableau = tableau
 			flipCard(activeCardParentIndex)
+			dropSound.play()
 		} else if (dataFoundation && dropCardToFoundationPileRules()) {
 			if (
 				activeCardIndex !==
@@ -396,6 +457,11 @@
 			dropIfDraggedFromTableau(key)
 			foundation = foundation
 			tableau = tableau
+			parent.classList.add("valid-move")
+			successAudio.play()
+			setTimeout(() => {
+				parent.classList.remove("valid-move")
+			}, 800)
 			flipCard(activeCardParentIndex)
 		} else if (
 			dataFoundation &&
@@ -407,6 +473,11 @@
 			let currentCard = foundation[activeKey].pop()!
 			foundation[key] = [...foundation[key], currentCard]
 			foundation = foundation
+			parent.classList.add("valid-move")
+			successAudio.play()
+			setTimeout(() => {
+				parent.classList.remove("valid-move")
+			}, 800)
 		}
 
 		resetZIndex()
@@ -441,18 +512,14 @@
 		}
 		return false
 	}
-	function testme(ev: MouseEvent) {
-		const element = ev.target as HTMLElement
-		element.classList.add("rotate-me")
-	}
 </script>
 
 <main
 	on:dragover={dragOver}
 	role="application"
-	class="min-h-screen w-screen py-6 overflow-hidden"
+	class="min-h-screen w-screen pt-12 overflow-hidden"
 >
-	<div class="w-5/6 mx-auto grid gap-4 gap-y-12 grid-cols-7">
+	<div class="w-4/5 mx-auto grid gap-4 gap-y-12 grid-cols-7">
 		<div class="relative col-start-1 col-end-2 row-start-1 row-end-2">
 			{#if Cards.length === 0}
 				<div
@@ -494,7 +561,8 @@
 							on:dragstart={dragStart}
 							on:drag={drag}
 							on:dragend={dragEnd}
-							class="{dimensions} {design} dragged top-0 stack_face_up"
+							class="{dimensions} {design} dragged top-0 stack_face_up {index ===
+								stockPile.length - 1 && 'hide-card'}"
 						>
 							<Placeholder {card} />
 						</div>
@@ -510,7 +578,8 @@
 							on:dragstart={dragStart}
 							on:drag={drag}
 							on:dragend={dragEnd}
-							class="{dimensions} {design} dragged top-0 left-6 stack_face_up"
+							class="{dimensions} {design} dragged top-0 left-6 stack_face_up {index ===
+								stockPile.length - 1 && 'hide-card'}"
 						>
 							<Placeholder {card} />
 						</div>
@@ -526,7 +595,8 @@
 							on:dragstart={dragStart}
 							on:drag={drag}
 							on:dragend={dragEnd}
-							class="{dimensions} {design} dragged top-0 left-12 stack_face_up"
+							class="{dimensions} {design} dragged top-0 left-12 stack_face_up {index ===
+								stockPile.length - 1 && 'hide-card'}"
 						>
 							<Placeholder {card} />
 						</div>
@@ -575,7 +645,8 @@
 							on:dragstart={dragStart}
 							on:drag={drag}
 							on:dragend={dragEnd}
-							class="{dimensions} {design} dragged top-0 left-12 stack_face_up"
+							class="{dimensions} {design} dragged top-0 left-12 stack_face_up {index ===
+								stockPile.length - 1 && 'hide-card'}"
 						>
 							<Placeholder {card} />
 						</div>
@@ -585,7 +656,7 @@
 		</div>
 		<div
 			data-foundation="0"
-			class="relative h-[200px] col-start-4 col-end-5 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
+			class="relative {`h-[${height}px]`} col-start-4 col-end-5 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
 		>
 			<div
 				on:dragover={dragOver}
@@ -629,7 +700,7 @@
 		</div>
 		<div
 			data-foundation="1"
-			class="relative h-[200px] col-start-5 col-end-6 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
+			class="relative {`h-[${height}px]`} col-start-5 col-end-6 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
 		>
 			<div
 				on:dragover={dragOver}
@@ -673,7 +744,7 @@
 		</div>
 		<div
 			data-foundation="2"
-			class="relative w-full h-[200px] col-start-6 col-end-7 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
+			class="relative w-full {`h-[${height}px]`} col-start-6 col-end-7 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
 		>
 			<div
 				on:dragover={dragOver}
@@ -719,7 +790,7 @@
 		</div>
 		<div
 			data-foundation="3"
-			class="relative h-[200px] col-start-7 col-end-8 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
+			class="relative {`h-[${height}px]`} col-start-7 col-end-8 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
 		>
 			<div
 				on:dragover={dragOver}
@@ -784,7 +855,7 @@
 					on:dragstart={dragStart}
 					on:drag={drag}
 					on:dragend={dragEnd}
-					class="{dimensions} {design} rotate-me"
+					class="{dimensions} {design}"
 				>
 					<Placeholder {card} />
 				</div>
@@ -1014,10 +1085,45 @@
 			0 -1px 2px rgba(0, 0, 0, 0.2),
 			3px 3px 8px rgba(0, 0, 0, 0.4);
 	}
-	.rotate-me {
-		animation: rotate-me 3000ms ease forwards;
+	.flip-card {
+		animation: flip-card 700ms ease forwards;
 	}
-	@keyframes rotate-me {
+	.reveal-card {
+		animation: reveal-card 50ms ease-in-out forwards;
+	}
+	.hide-card {
+		transform: translateX(-100px);
+		opacity: 50;
+	}
+	.valid-move {
+		position: relative;
+	}
+	.valid-move::before {
+		content: "";
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 105%;
+		height: 105%;
+		border-radius: 12px;
+		box-shadow: 0 0 4px 5px rgba(0, 204, 255, 0.733);
+		animation: valid-move 1000ms ease-out forwards;
+	}
+	@keyframes reveal-card {
+		to {
+			transform: translateX(0);
+			opacity: 100;
+		}
+	}
+	@keyframes valid-move {
+		to {
+			height: 115%;
+			width: 115%;
+			opacity: 0;
+		}
+	}
+	@keyframes flip-card {
 		from {
 			transform: rotateY(90deg);
 		}
