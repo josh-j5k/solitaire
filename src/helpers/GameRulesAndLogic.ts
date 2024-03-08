@@ -18,7 +18,7 @@ export function gameRulesAndLogic(foundationPileLength: number, activeCardRank: 
     }
     function dropIfWastePileToTableau() {
         let currentCard = stockPile.pop()!
-        tableau[parentIndex].faceUp.push(currentCard)
+        tableau[parentIndex].faceUp = [...tableau[parentIndex].faceUp, currentCard]
 
 
     }

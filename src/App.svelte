@@ -18,7 +18,26 @@
 
 	const { cardNumber, cardType, cardColor } = setCardNameAndNumberAtrribute()
 	const offsetTop = 25
-
+	const time = {
+		minutes: 0,
+		seconds: 0,
+	}
+	let score = 0
+	let streak = 5
+	function streaking() {
+		const streakInterval = setInterval(() => {
+			streak--
+			if (streak < 0) {
+				streak = 5
+				clearInterval(streakInterval)
+			}
+		}, 1000)
+	}
+	function setStreakingScore(isFoundation: boolean) {
+		if (streak < 5) {
+			isFoundation ? (score += 15) : (score += 10)
+		}
+	}
 	let components = <cardComponent>[
 		{ component: Spade },
 		{ component: Club },
@@ -130,6 +149,13 @@
 	let mouseY: number
 	let totalCards = 52
 
+	setInterval(() => {
+		time.seconds++
+		if (time.seconds > 59) {
+			time.seconds = 0
+			time.minutes += 1
+		}
+	}, 1000)
 	function setCardFaceDown(number: number) {
 		for (let index = 0; index < number; index++) {
 			let randomNumber = Math.floor(Math.random() * totalCards)
@@ -230,31 +256,14 @@
 	}
 	function dragStart(e: DragEvent) {
 		const element = e.target as HTMLDivElement
-		const parent = <HTMLDivElement>element.parentElement
-		const dataWastePile = element.getAttribute("data-waste-pile")
-		const dataFoundation = parent?.getAttribute("data-foundation")
-		const dataTableau = parent?.getAttribute("data-tableau")
+		// const parent = <HTMLDivElement>element.parentElement
+
 		dragStartSound.play()
 		top = element.style.top
 		left = element.style.left
-		if (dataWastePile) {
-			isDraggedFromWastePile = true
-			activeCardParentIndex = -1
-		} else {
-			isDraggedFromWastePile = false
-			dataFoundation
-				? (activeCardParentIndex = parseInt(dataFoundation))
-				: (activeCardParentIndex = parseInt(dataTableau!))
-		}
 
-		activeCardIndex = parseInt(element.getAttribute("data-index")!)
 		mouseX = e.x
 		mouseY = e.y
-
-		if (element.classList.contains("dragged"))
-			element.classList.remove("dragged")
-		if (element.classList.contains("stack_face_up"))
-			element.classList.remove("stack_face_up")
 
 		const img = document.createElement("img")
 		eleHeight = element.clientHeight / 2
@@ -275,14 +284,33 @@
 	}
 
 	function drag(e: DragEvent) {
-		const dragoverZone = document.querySelectorAll(".dragover_zone")
-		dragoverZone.forEach((zone) => {
-			zone.classList.add("show")
-		})
 		const element = e.target as HTMLDivElement
 		const parent = element.offsetParent as HTMLDivElement
 		const currentIndex = element.getAttribute("data-index")!
 		const indices = parent.querySelectorAll("div[data-index]")
+		const dataWastePile = element.getAttribute("data-waste-pile")
+		const dataFoundation = parent?.getAttribute("data-foundation")
+		const dataTableau = parent?.getAttribute("data-tableau")
+		const dragoverZone = document.querySelectorAll(".dragover_zone")
+		dragoverZone.forEach((zone) => {
+			zone.classList.add("show")
+		})
+		if (element.classList.contains("dragged"))
+			element.classList.remove("dragged")
+		if (element.classList.contains("stack_face_up"))
+			element.classList.remove("stack_face_up")
+
+		if (dataWastePile) {
+			isDraggedFromWastePile = true
+			activeCardParentIndex = -1
+		} else {
+			isDraggedFromWastePile = false
+			dataFoundation
+				? (activeCardParentIndex = parseInt(dataFoundation))
+				: (activeCardParentIndex = parseInt(dataTableau!))
+		}
+
+		activeCardIndex = parseInt(element.getAttribute("data-index")!)
 
 		element.classList.add("dragging")
 		let centerX = e.clientX - mouseX
@@ -403,6 +431,9 @@
 				tableau = tableau
 				stockPile = stockPile
 				dropSound.play()
+				score += 5
+				setStreakingScore(false)
+				streaking()
 				setTimeout(() => {
 					const elements = document.querySelectorAll(
 						'div[data-waste-pile="true"]'
@@ -416,7 +447,10 @@
 				stockPile = stockPile
 				foundation = foundation
 				parent.classList.add("valid-move")
+				score += 10
 				successAudio.play()
+				setStreakingScore(true)
+				streaking()
 				setTimeout(() => {
 					parent.classList.remove("valid-move")
 				}, 800)
@@ -427,10 +461,7 @@
 					elements.forEach((ele) => ele.classList.remove("hide-card"))
 				}, 0)
 			}
-			return
-		}
-
-		if (
+		} else if (
 			dataTableau &&
 			activeCardElement.parentElement?.hasAttribute("data-foundation")
 		) {
@@ -443,6 +474,9 @@
 			dropIfTableauToTableau()
 			tableau[activeCardParentIndex] = tableau[activeCardParentIndex]
 			tableau = tableau
+			score += 5
+			setStreakingScore(false)
+			streaking()
 			flipCard(activeCardParentIndex)
 			dropSound.play()
 		} else if (dataFoundation && dropCardToFoundationPileRules()) {
@@ -457,8 +491,11 @@
 			dropIfDraggedFromTableau(key)
 			foundation = foundation
 			tableau = tableau
+			setStreakingScore(true)
+			streaking()
 			parent.classList.add("valid-move")
 			successAudio.play()
+			score += 10
 			setTimeout(() => {
 				parent.classList.remove("valid-move")
 			}, 800)
@@ -517,8 +554,55 @@
 <main
 	on:dragover={dragOver}
 	role="application"
-	class="min-h-screen w-screen pt-12 overflow-hidden"
+	class="min-h-screen w-screen pt-12 overflow-hidden relative isolate"
 >
+	<div
+		class="absolute top-0 w-full h-11 before:content-[''] before:absolute before:inset-0 before:w-full before:h-full before:bg-[#00000038] before:-z-10"
+	>
+		<div class="w-5/6 mx-auto h-full flex items-center justify-between">
+			<div class="w-full">
+				<button
+					class="w-8 aspect-square flex justify-center items-center bg-[#00000083]"
+				>
+					<svg
+						viewBox="0 -1 12 12"
+						id="meteor-icon-kit__regular-bars-s"
+						fill="none"
+						width="24"
+						height="24"
+						xmlns="http://www.w3.org/2000/svg"
+						><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g
+							id="SVGRepo_tracerCarrier"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						></g><g id="SVGRepo_iconCarrier"
+							><path
+								fill-rule="evenodd"
+								clip-rule="evenodd"
+								d="M0.85714 2C0.38376 2 0 1.55228 0 1C0 0.44772 0.38376 0 0.85714 0H11.1429C11.6162 0 12 0.44772 12 1C12 1.55228 11.6162 2 11.1429 2H0.85714zM0.85714 6C0.38376 6 0 5.5523 0 5C0 4.4477 0.38376 4 0.85714 4H11.1429C11.6162 4 12 4.4477 12 5C12 5.5523 11.6162 6 11.1429 6H0.85714zM0.85714 10C0.38376 10 0 9.5523 0 9C0 8.4477 0.38376 8 0.85714 8H11.1429C11.6162 8 12 8.4477 12 9C12 9.5523 11.6162 10 11.1429 10H0.85714z"
+								fill="#fff"
+							></path></g
+						></svg
+					>
+				</button>
+			</div>
+			<div class="w-full flex justify-between">
+				<div class="flex justify-between gap-6 items-center">
+					<span class="text-3xl text-white">Score:</span>
+					<span class="text-3xl text-white">{score}</span>
+				</div>
+				<div class="flex">
+					<span class="text-3xl text-white"
+						>{time.minutes > 9 ? time.minutes : "0" + time.minutes}</span
+					>
+					<span class="text-3xl text-white">:</span>
+					<span class="text-3xl text-white"
+						>{time.seconds > 9 ? time.seconds : "0" + time.seconds}</span
+					>
+				</div>
+			</div>
+		</div>
+	</div>
 	<div class="w-4/5 mx-auto grid gap-4 gap-y-12 grid-cols-7">
 		<div class="relative col-start-1 col-end-2 row-start-1 row-end-2">
 			{#if Cards.length === 0}
