@@ -4,7 +4,7 @@
 	import { setCardNameAndNumberAtrribute } from "./helpers/SetCardNameAndNumberAtrribute"
 	import CardFaceDown from "./lib/CardFaceDown.svelte"
 	import { gameRulesAndLogic } from "./helpers/GameRulesAndLogic"
-	import { useConfetti } from "./helpers/Confetti"
+
 	import {
 		type card,
 		type cardComponent,
@@ -22,7 +22,7 @@
 		{ component: Diamond },
 	]
 	const { cardNumber, cardType, cardColor } = setCardNameAndNumberAtrribute()
-	const { confetti } = useConfetti()
+
 	const offsetTop = 25
 	const time = {
 		minutes: 0,
@@ -47,6 +47,12 @@
 	)
 	const clickSound = new Audio(
 		"/src/assets/audio/click-for-game-menu-131903.mp3"
+	)
+	const reDeal = new Audio(
+		"/src/assets/audio/Solitaire Card Game SFX - Page 2_5.m4a"
+	)
+	const winningSound = new Audio(
+		"/src/assets/audio/positive-notification-new-level-152480.mp3"
 	)
 	const arr = [
 		"King",
@@ -136,6 +142,7 @@
 	let mouseY: number
 	let totalCards = 52
 	let streakInterval: number
+	let timeInterval: number
 	let dimensions = "w-full" + " h-[" + height.toString() + "px]"
 	let design = "bg-white relative rounded-lg cursor-default"
 	let validateScore = {
@@ -186,7 +193,7 @@
 				alignElements(block)
 			})
 		}, 5)
-		setInterval(() => {
+		timeInterval = setInterval(() => {
 			time.seconds++
 			if (time.seconds > 59) {
 				time.seconds = 0
@@ -196,8 +203,12 @@
 	}
 	function newGame() {
 		clickSound.play()
-
-		gameStarted = true
+		if (win) {
+			win = false
+		}
+		if (!gameStarted) {
+			gameStarted = true
+		}
 
 		startGame()
 	}
@@ -224,6 +235,7 @@
 			Cards = Cards
 			stockPile = <Array<card>>[]
 			stockPile = stockPile
+			reDeal.play()
 		} else {
 			const element = Cards.pop()!
 			stockPile.push(element)
@@ -298,8 +310,9 @@
 			validateScore[3].maxLength === 13
 		) {
 			win = true
+			winningSound.play()
+			clearInterval(timeInterval)
 		}
-		confetti()
 	}
 	function dragStart(e: DragEvent) {
 		const element = e.target as HTMLDivElement
@@ -590,7 +603,6 @@
 				parent.classList.remove("valid-move")
 			}, 800)
 		}
-		console.log(validateScore)
 
 		showWinnigScreen()
 		resetZIndex()
@@ -615,10 +627,30 @@
 	role="application"
 	class="min-h-screen w-screen pt-12 overflow-hidden relative isolate"
 >
-	<div class="fixed w-screen h-screen bg-[#00000063] z-50 inset-0">
-		Congratulations
-	</div>
-	<canvas id="confettiCanvas"></canvas>
+	{#if win}
+		<div
+			id="success"
+			class="fixed w-screen h-screen bg-[#00000041] flex justify-center items-center z-50 inset-0"
+		>
+			<div
+				class=" flex flex-col gap-4 max-w-2xl px-12 h-96 bg-[url(/src/assets/15717677_SL_120319_25700_10.jpg)] bg-left-top justify-center items-center transition-transform duration-700 ease-in -translate-y-[200%] {win &&
+					'translate-y-0'}"
+			>
+				<span class="text-5xl font-extrabold uppercase gradient-text">
+					Congratulations!
+				</span>
+				<span class="text-4xl font-extrabold uppercase gradient-text">
+					You Win
+				</span>
+				<button
+					on:click={newGame}
+					class="bg-blue-500 border border-blue-500 transition-colors hover:bg-transparent text-white text-2xl py-2 px-8 rounded capitalize"
+				>
+					New Game
+				</button>
+			</div>
+		</div>
+	{/if}
 	{#if gameStarted}
 		<div
 			class="absolute top-0 w-full h-11 before:content-[''] before:absolute before:inset-0 before:w-full before:h-full before:bg-[#00000038] before:-z-10"
@@ -669,7 +701,7 @@
 		</div>
 		<div class="w-4/5 mx-auto grid gap-4 gap-y-12 grid-cols-7">
 			<div class="relative col-start-1 col-end-2 row-start-1 row-end-2">
-				{#if Cards.length === 0}
+				{#if Cards.length === 0 && stockPile.length > 0}
 					<div
 						role="button"
 						tabindex="0"
@@ -681,6 +713,36 @@
 					before:top-1/2
 					before:-translate-y-1/2 before:bg-transparent"
 					></div>
+				{:else if Cards.length === 0 && stockPile.length === 0}
+					<div
+						class="relative {dimensions} border-2 border-white rounded-lg flex flex-col justify-center items-center gap-3"
+					>
+						<svg
+							fill="#fff"
+							viewBox="0 0 24 24"
+							id="check-mark-circle-2"
+							data-name="Flat Line"
+							xmlns="http://www.w3.org/2000/svg"
+							class="icon flat-line w-10"
+							><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g
+								id="SVGRepo_tracerCarrier"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							></g><g id="SVGRepo_iconCarrier"
+								><polyline
+									id="primary"
+									points="21 5 12 14 8 10"
+									style="fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"
+								></polyline><path
+									id="primary-2"
+									data-name="primary"
+									d="M20.94,11A8.26,8.26,0,0,1,21,12a9,9,0,1,1-9-9,8.83,8.83,0,0,1,4,1"
+									style="fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"
+								></path></g
+							></svg
+						>
+						<span class="text-white"> Solved! </span>
+					</div>
 				{:else}
 					<div
 						role="button"
@@ -1238,14 +1300,13 @@
 </main>
 
 <style scoped>
-	#confettiCanvas {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		z-index: 1;
+	.gradient-text {
+		background-image: linear-gradient(to bottom, #ff9900, #ff3366);
+		background-clip: text;
+		-webkit-background-clip: text; /* For Safari/Chrome */
+		color: transparent;
 	}
+
 	main {
 		background-image: url("./assets/perfect-green-grass.jpg");
 	}

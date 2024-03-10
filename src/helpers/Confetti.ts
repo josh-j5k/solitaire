@@ -10,11 +10,13 @@ type confettiParticles = {
 export function useConfetti() {
 
     // confetti.js
-
+    const container = document.getElementById('success')
     // Get the canvas element
-    const canvas = document.getElementById('confettiCanvas') as HTMLCanvasElement;
+    const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')!;
-
+    if (container) {
+        container.appendChild(canvas)
+    }
     // Set canvas dimensions
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
