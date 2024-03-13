@@ -1,6 +1,6 @@
 import { type TFoundation, type card, type row } from "../types/Cards"
 
-export function dropToTableau(foundationPileLength: number, activeCardRank: number, currentTableauCardColor: string, activeCardColor: string, currentTableauCardRank: number, activeCardParentIndex: number, activeCardIndex: number, parentIndex: number, foundation: TFoundation, stockPile: card[], tableau: row[]) {
+export function dropToTableau(foundationPileLength: number, activeCardRank: number, currentTableauCardColor: string, activeCardColor: string, currentTableauCardRank: number, activeCardParentIndex: number, activeCardIndex: number, parentIndex: number, foundation: TFoundation, wastePile: card[], tableau: row[]) {
     function dropIfTableauToTableau() {
 
         let currentCard =
@@ -13,7 +13,7 @@ export function dropToTableau(foundationPileLength: number, activeCardRank: numb
 
     }
     function dropIfWastePileToTableau() {
-        let currentCard = stockPile.pop()!
+        let currentCard = wastePile.pop()!
         tableau[parentIndex].faceUp.push(currentCard)
 
 

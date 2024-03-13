@@ -3,7 +3,7 @@ import { type TFoundation, type card, type row } from "../types/Cards"
 export function dropToFoundationPile(foundationPileLength: number, activeCardRank: number,
     activeCardType: string,
     currentFoundationCardType: string,
-    currentFoundationCardRank: number, activeCardParentIndex: number, foundation: TFoundation, stockPile: card[], tableau: row[]) {
+    currentFoundationCardRank: number, activeCardParentIndex: number, foundation: TFoundation, wastePile: card[], tableau: row[]) {
 
     const dropIfDraggedFromTableau = (key: keyof TFoundation) => {
 
@@ -15,10 +15,10 @@ export function dropToFoundationPile(foundationPileLength: number, activeCardRan
     const dropIfDraggedFromWastePile = (key: keyof TFoundation) => {
         console.log('dropIfDraggedFromWastePile')
 
-        let currentCard = stockPile.pop()!
+        let currentCard = wastePile.pop()!
         foundation[key] = [...foundation[key], currentCard]
         foundation = foundation
-        stockPile = stockPile
+        wastePile = wastePile
     }
     const dropCardToFoundationPileRules = (): boolean => {
 

@@ -4,7 +4,7 @@
 	import { setCardNameAndNumberAtrribute } from "./helpers/SetCardNameAndNumberAtrribute"
 	import CardFaceDown from "./lib/CardFaceDown.svelte"
 	import { gameRulesAndLogic } from "./helpers/GameRulesAndLogic"
-
+	import { useDimensionDesign } from "./helpers/DimensionDesigns"
 	import {
 		type card,
 		type cardComponent,
@@ -22,7 +22,7 @@
 		{ component: Diamond },
 	]
 	const { cardNumber, cardType, cardColor } = setCardNameAndNumberAtrribute()
-
+	const { design, dimensions } = useDimensionDesign()
 	const offsetTop = 25
 	const time = {
 		minutes: 0,
@@ -75,14 +75,14 @@
 		}
 	})
 	const height = 180
-	let Cards = <Array<card>>[]
+	let stockPile = <Array<card>>[]
 	cardTypeWithComponent.forEach((card) => {
 		card.components.forEach((component) => {
 			const obj = <card>{
 				card: card.card,
 				component: component.component,
 			}
-			Cards.push(obj)
+			stockPile.push(obj)
 		})
 	})
 	const emptyTableau = <Array<row>>[
@@ -121,7 +121,7 @@
 		2: <Array<card>>[],
 		3: <Array<card>>[],
 	}
-	let stockPile = <Array<card>>[]
+	let wastePile = <Array<card>>[]
 	let tableau = [...emptyTableau]
 	let foundation = emptyFoundation
 
@@ -146,8 +146,7 @@
 	let totalCards = 52
 	let streakInterval: number
 	let timeInterval: number
-	let dimensions = "w-full" + " h-[" + height.toString() + "px]"
-	let design = "bg-white relative rounded-lg cursor-default"
+
 	let validateScore = {
 		0: {
 			maxLength: 0,
@@ -170,24 +169,25 @@
 	function setCardFaceDown(number: number) {
 		for (let index = 0; index < number; index++) {
 			let randomNumber = Math.floor(Math.random() * totalCards)
-			tableau[number].faceDown.push(Cards[randomNumber])
-			Cards.splice(randomNumber, 1)
+			tableau[number].faceDown.push(stockPile[randomNumber])
+			stockPile.splice(randomNumber, 1)
 			totalCards -= 1
 		}
 	}
-	function startGame() {
+	function shuffleAndArrangeCards() {
 		for (let index = 0; index < 7; index++) {
 			let randomNumber = Math.floor(Math.random() * totalCards)
-			tableau[index].faceUp.push(Cards[randomNumber])
-			Cards.splice(randomNumber, 1)
+			tableau[index].faceUp.push(stockPile[randomNumber])
+			stockPile.splice(randomNumber, 1)
 			totalCards -= 1
 		}
 
-		Cards.sort(() => (Math.random() > 0.5 ? 1 : -1))
+		stockPile.sort(() => (Math.random() > 0.5 ? 1 : -1))
 		for (let index = 1; index < 7; index++) {
 			setCardFaceDown(index)
 		}
-
+	}
+	function playStartAnimationAndAlignCards() {
 		let startGameTimeout = setTimeout(() => {
 			let index = 1
 			let parentIndex = 1
@@ -235,6 +235,10 @@
 				}
 			}, 50)
 		}, 5)
+	}
+	function startGame() {
+		playStartAnimationAndAlignCards()
+		shuffleAndArrangeCards()
 		timeInterval = setInterval(() => {
 			time.seconds++
 			if (time.seconds > 59) {
@@ -246,36 +250,46 @@
 	function startNewGame() {
 		clickSound.play()
 		stockPile = <Array<card>>[]
+		wastePile = <Array<card>>[]
 		tableau.forEach((ele) => {
 			ele.faceDown = <Array<card>>[]
 			ele.faceUp = <Array<card>>[]
 		})
-		Object.values(foundation).forEach((val) => (val = <Array<card>>[]))
+		foundation[0] = <Array<card>>[]
+		foundation[1] = <Array<card>>[]
+		foundation[2] = <Array<card>>[]
+		foundation[3] = <Array<card>>[]
 		tableau = tableau
 		foundation = foundation
 		clearInterval(timeInterval)
+		time.minutes = 0
+		time.seconds = 0
 		menuToggled = false
-		setTimeout(() => {
-			for (let index = 0; index < 7; index++) {
-				let randomNumber = Math.floor(Math.random() * totalCards)
-				tableau[index].faceUp.push(Cards[randomNumber])
-				Cards.splice(randomNumber, 1)
-				totalCards -= 1
-			}
-
-			Cards.sort(() => (Math.random() > 0.5 ? 1 : -1))
-			for (let index = 1; index < 7; index++) {
-				setCardFaceDown(index)
-			}
-			tableau = tableau
-			stockPile = stockPile
-			const containingBlock = document.querySelectorAll(".containing_block")
-
-			containingBlock.forEach((ele) => {
-				const block = ele as HTMLDivElement
-				alignElements(block)
+		let mainTimeout: number
+		cardTypeWithComponent.forEach((card) => {
+			card.components.forEach((component) => {
+				const obj = <card>{
+					card: card.card,
+					component: component.component,
+				}
+				stockPile.push(obj)
 			})
-		}, 2000)
+		})
+		mainTimeout = setTimeout(() => {
+			shuffleAndArrangeCards()
+			tableau = tableau
+			wastePile = wastePile
+			stockPile = stockPile
+			playStartAnimationAndAlignCards()
+			clearTimeout(mainTimeout)
+		}, 1000)
+		timeInterval = setInterval(() => {
+			time.seconds++
+			if (time.seconds > 59) {
+				time.seconds = 0
+				time.minutes += 1
+			}
+		}, 1000)
 	}
 	function pauseAndPlayGame() {
 		clickSound.play()
@@ -329,17 +343,17 @@
 	}
 
 	function revealAndRedealStockpile() {
-		if (Cards.length === 0) {
-			Cards = stockPile.reverse()
-			Cards = Cards
-			stockPile = <Array<card>>[]
+		if (stockPile.length === 0) {
+			stockPile = wastePile.reverse()
 			stockPile = stockPile
+			wastePile = <Array<card>>[]
+			wastePile = wastePile
 			reDeal.play()
 		} else {
-			const element = Cards.pop()!
-			stockPile.push(element)
-			Cards = Cards
+			const element = stockPile.pop()!
+			wastePile.push(element)
 			stockPile = stockPile
+			wastePile = wastePile
 			dealCard.play()
 			setTimeout(() => {
 				const currentWastePile = document.querySelectorAll(
@@ -563,10 +577,10 @@
 			activeCardIndex,
 			parentIndex,
 			foundation,
-			stockPile,
+			wastePile,
 			tableau
 		)
-
+		let dropTimeout: number
 		const setDropKey = (): keyof TFoundation => parentIndex as keyof TFoundation
 		const dragKey = (): keyof TFoundation =>
 			activeCardParentIndex as keyof TFoundation
@@ -575,7 +589,7 @@
 			if (dataTableau && dropCardToTableauRules()) {
 				dropIfWastePileToTableau()
 				tableau = tableau
-				stockPile = stockPile
+				wastePile = wastePile
 				dropSound.play()
 				setScore(false)
 				if (streak > 0 && streak < 5) {
@@ -585,18 +599,19 @@
 				} else {
 					streaking()
 				}
-				setTimeout(() => {
+				dropTimeout = setTimeout(() => {
 					const elements = document.querySelectorAll(
 						'div[data-waste-pile="true"]'
 					)
 					elements.forEach((ele) => ele.classList.remove("hide-card"))
 					alignElements(parent)
+					clearTimeout(dropTimeout)
 				}, 0)
 			} else if (dataFoundation && dropCardToFoundationPileRules()) {
 				const key = setDropKey()
 				dropIfDraggedFromWastePile(key)
 
-				stockPile = stockPile
+				wastePile = wastePile
 				foundation = foundation
 				parent.classList.add("valid-move")
 
@@ -618,11 +633,12 @@
 				setTimeout(() => {
 					parent.classList.remove("valid-move")
 				}, 800)
-				setTimeout(() => {
+				dropTimeout = setTimeout(() => {
 					const elements = document.querySelectorAll(
 						'div[data-waste-pile="true"]'
 					)
 					elements.forEach((ele) => ele.classList.remove("hide-card"))
+					clearTimeout(dropTimeout)
 				}, 0)
 			}
 		} else if (
@@ -652,8 +668,9 @@
 			}
 			flipCard(activeCardParentIndex)
 			dropSound.play()
-			setTimeout(() => {
+			dropTimeout = setTimeout(() => {
 				alignElements(parent)
+				clearTimeout(dropTimeout)
 			}, 0)
 		} else if (dataFoundation && dropCardToFoundationPileRules()) {
 			if (
@@ -682,8 +699,9 @@
 					streaking()
 				}
 			}
-			setTimeout(() => {
+			dropTimeout = setTimeout(() => {
 				parent.classList.remove("valid-move")
+				clearTimeout(dropTimeout)
 			}, 800)
 			flipCard(activeCardParentIndex)
 		} else if (
@@ -698,8 +716,9 @@
 			foundation = foundation
 			parent.classList.add("valid-move")
 			successAudio.play()
-			setTimeout(() => {
+			dropTimeout = setTimeout(() => {
 				parent.classList.remove("valid-move")
+				clearTimeout(dropTimeout)
 			}, 800)
 		}
 
@@ -967,7 +986,7 @@
 		</div>
 		<div class="w-4/5 mx-auto grid gap-4 gap-y-12 grid-cols-7">
 			<div class="relative col-start-1 col-end-2 row-start-1 row-end-2">
-				{#if Cards.length === 0 && stockPile.length > 0}
+				{#if stockPile.length === 0 && wastePile.length > 0}
 					<div
 						role="button"
 						tabindex="0"
@@ -979,7 +998,7 @@
 					before:top-1/2
 					before:-translate-y-1/2 before:bg-transparent"
 					></div>
-				{:else if Cards.length === 0 && stockPile.length === 0}
+				{:else if stockPile.length === 0 && wastePile.length === 0}
 					<div
 						class="relative {dimensions} border-2 border-white rounded-lg flex flex-col justify-center items-center gap-3"
 					>
@@ -1016,7 +1035,7 @@
 						on:click={revealAndRedealStockpile}
 						on:keydown={keyBoardReveal}
 					>
-						<CardFaceDown {dimensions} />
+						<CardFaceDown />
 					</div>
 				{/if}
 			</div>
@@ -1024,21 +1043,21 @@
 				data-stack-faceup
 				class="relative col-start-2 col-end-3 row-start-1 row-end-2"
 			>
-				{#each stockPile as card, index}
-					{#if stockPile.length <= 3}
+				{#each wastePile as card, index}
+					{#if wastePile.length <= 3}
 						{#if index === 0}
 							<div
 								data-waste-pile="true"
 								data-card-rank={cardNumber(card?.card)}
 								data-card-type={cardType(card?.component)}
 								data-card-color={cardColor(card?.component)}
-								draggable={draggableOne(stockPile)}
+								draggable={draggableOne(wastePile)}
 								role="application"
 								on:dragstart={dragStart}
 								on:drag={drag}
 								on:dragend={dragEnd}
 								class="{dimensions} {design} dragged top-0 stack_face_up {index ===
-									stockPile.length - 1 && 'hide-card'}"
+									wastePile.length - 1 && 'hide-card'}"
 							>
 								<Placeholder {card} />
 							</div>
@@ -1049,13 +1068,13 @@
 								data-card-rank={cardNumber(card?.card)}
 								data-card-type={cardType(card?.component)}
 								data-card-color={cardColor(card?.component)}
-								draggable={draggableTwo(stockPile)}
+								draggable={draggableTwo(wastePile)}
 								role="application"
 								on:dragstart={dragStart}
 								on:drag={drag}
 								on:dragend={dragEnd}
 								class="{dimensions} {design} dragged top-0 left-6 stack_face_up {index ===
-									stockPile.length - 1 && 'hide-card'}"
+									wastePile.length - 1 && 'hide-card'}"
 							>
 								<Placeholder {card} />
 							</div>
@@ -1072,19 +1091,19 @@
 								on:drag={drag}
 								on:dragend={dragEnd}
 								class="{dimensions} {design} dragged top-0 left-12 stack_face_up {index ===
-									stockPile.length - 1 && 'hide-card'}"
+									wastePile.length - 1 && 'hide-card'}"
 							>
 								<Placeholder {card} />
 							</div>
 						{/if}
 					{:else}
-						{#if index === stockPile.length - 3}
+						{#if index === wastePile.length - 3}
 							<div
 								data-waste-pile="true"
 								data-card-rank={cardNumber(card?.card)}
 								data-card-type={cardType(card?.component)}
 								data-card-color={cardColor(card?.component)}
-								draggable={draggableOne(stockPile)}
+								draggable={draggableOne(wastePile)}
 								role="application"
 								on:dragstart={dragStart}
 								on:drag={drag}
@@ -1094,13 +1113,13 @@
 								<Placeholder {card} />
 							</div>
 						{/if}
-						{#if index === stockPile.length - 2}
+						{#if index === wastePile.length - 2}
 							<div
 								data-waste-pile="true"
 								data-card-rank={cardNumber(card?.card)}
 								data-card-type={cardType(card?.component)}
 								data-card-color={cardColor(card?.component)}
-								draggable={draggableTwo(stockPile)}
+								draggable={draggableTwo(wastePile)}
 								role="application"
 								on:dragstart={dragStart}
 								on:drag={drag}
@@ -1110,7 +1129,7 @@
 								<Placeholder {card} />
 							</div>
 						{/if}
-						{#if index === stockPile.length - 1}
+						{#if index === wastePile.length - 1}
 							<div
 								data-waste-pile="true"
 								data-card-rank={cardNumber(card?.card)}
@@ -1122,7 +1141,7 @@
 								on:drag={drag}
 								on:dragend={dragEnd}
 								class="{dimensions} {design} dragged top-0 left-12 stack_face_up {index ===
-									stockPile.length - 1 && 'hide-card'}"
+									wastePile.length - 1 && 'hide-card'}"
 							>
 								<Placeholder {card} />
 							</div>
@@ -1176,7 +1195,7 @@
 			</div>
 			<div
 				data-foundation="1"
-				class="relative {`h-[${height}px]`} col-start-5 col-end-6 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
+				class="relative {dimensions} col-start-5 col-end-6 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
 			>
 				<div
 					on:dragover={dragOver}
@@ -1220,7 +1239,7 @@
 			</div>
 			<div
 				data-foundation="2"
-				class="relative w-full {`h-[${height}px]`} col-start-6 col-end-7 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
+				class="relative {dimensions} col-start-6 col-end-7 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
 			>
 				<div
 					on:dragover={dragOver}
@@ -1266,7 +1285,7 @@
 			</div>
 			<div
 				data-foundation="3"
-				class="relative {`h-[${height}px]`} col-start-7 col-end-8 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
+				class="relative {dimensions} col-start-7 col-end-8 row-start-1 row-end-2 border-2 rounded-xl border-gray-100"
 			>
 				<div
 					on:dragover={dragOver}
@@ -1354,7 +1373,7 @@
 						class="{dimensions} cursor-default {gameLoadingAnimation &&
 							'-translate-y-36 -translate-x-24 opacity-0'}"
 					>
-						<CardFaceDown {dimensions} />
+						<CardFaceDown />
 					</div>
 				{/each}
 				{#each tableau[1].faceUp as card, index}
@@ -1392,7 +1411,7 @@
 						class="{dimensions} {gameLoadingAnimation &&
 							'-translate-y-36 -translate-x-24 opacity-0'} cursor-default"
 					>
-						<CardFaceDown {dimensions} />
+						<CardFaceDown />
 					</div>
 				{/each}
 				{#each tableau[2].faceUp as card, index}
@@ -1430,7 +1449,7 @@
 						class="{dimensions} {gameLoadingAnimation &&
 							'-translate-y-36 -translate-x-24 opacity-0'} cursor-default"
 					>
-						<CardFaceDown {dimensions} />
+						<CardFaceDown />
 					</div>
 				{/each}
 				{#each tableau[3].faceUp as card, index}
@@ -1468,7 +1487,7 @@
 						class="{dimensions} {gameLoadingAnimation &&
 							'-translate-y-36 -translate-x-24 opacity-0'} cursor-default"
 					>
-						<CardFaceDown {dimensions} />
+						<CardFaceDown />
 					</div>
 				{/each}
 				{#each tableau[4].faceUp as card, index}
@@ -1505,7 +1524,7 @@
 						class="{dimensions} {gameLoadingAnimation &&
 							'-translate-y-36 -translate-x-24 opacity-0'} cursor-default"
 					>
-						<CardFaceDown {dimensions} />
+						<CardFaceDown />
 					</div>
 				{/each}
 				{#each tableau[5].faceUp as card, index}
@@ -1543,7 +1562,7 @@
 						class="{dimensions} {gameLoadingAnimation &&
 							'-translate-y-36 -translate-x-24 opacity-0'} cursor-default"
 					>
-						<CardFaceDown {dimensions} />
+						<CardFaceDown />
 					</div>
 				{/each}
 				{#each tableau[6].faceUp as card, index}

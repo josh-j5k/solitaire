@@ -4,7 +4,7 @@ export function gameRulesAndLogic(foundationPileLength: number, activeCardRank: 
     activeCardType: string,
     currentCardType: string,
     currentCardColor: string, activeCardColor: string, activeCardParentIndex: number,
-    currentCardRank: number, activeCardIndex: number, parentIndex: number, foundation: TFoundation, stockPile: card[], tableau: row[]) {
+    currentCardRank: number, activeCardIndex: number, parentIndex: number, foundation: TFoundation, wastePile: card[], tableau: row[]) {
     function dropIfTableauToTableau() {
 
         let currentCard = tableau[activeCardParentIndex].faceUp.slice(activeCardIndex)
@@ -17,7 +17,7 @@ export function gameRulesAndLogic(foundationPileLength: number, activeCardRank: 
 
     }
     function dropIfWastePileToTableau() {
-        let currentCard = stockPile.pop()!
+        let currentCard = wastePile.pop()!
         tableau[parentIndex].faceUp = [...tableau[parentIndex].faceUp, currentCard]
 
 
@@ -48,7 +48,7 @@ export function gameRulesAndLogic(foundationPileLength: number, activeCardRank: 
 
     }
     const dropIfDraggedFromWastePile = (key: keyof TFoundation) => {
-        let currentCard = stockPile.pop()!
+        let currentCard = wastePile.pop()!
         foundation[key] = [...foundation[key], currentCard]
 
     }

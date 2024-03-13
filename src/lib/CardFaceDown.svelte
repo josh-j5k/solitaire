@@ -1,5 +1,6 @@
 <script lang="ts">
-	export let dimensions: string
+	import { useDimensionDesign } from "../helpers/DimensionDesigns"
+	const { dimensions } = useDimensionDesign()
 </script>
 
 <div class={dimensions}> </div>
