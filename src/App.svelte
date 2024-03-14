@@ -15,6 +15,7 @@
 	import Club from "./lib/icons/Club.svelte"
 	import Diamond from "./lib/icons/Diamond.svelte"
 	import Heart from "./lib/icons/Heart.svelte"
+	import Loader from "./lib/Loader.svelte"
 	let components = <cardComponent>[
 		{ component: Spade },
 		{ component: Club },
@@ -76,15 +77,7 @@
 	})
 	const height = 180
 	let stockPile = <Array<card>>[]
-	cardTypeWithComponent.forEach((card) => {
-		card.components.forEach((component) => {
-			const obj = <card>{
-				card: card.card,
-				component: component.component,
-			}
-			stockPile.push(obj)
-		})
-	})
+
 	const emptyTableau = <Array<row>>[
 		{
 			faceDown: [],
@@ -146,7 +139,7 @@
 	let totalCards = 52
 	let streakInterval: number
 	let timeInterval: number
-
+	let loader = false
 	let validateScore = {
 		0: {
 			maxLength: 0,
@@ -188,57 +181,67 @@
 		}
 	}
 	function playStartAnimationAndAlignCards() {
+		const containingBlock = document.querySelectorAll(".containing_block")
+		shuffleSound.play()
+		let index = 1
+		let parentIndex = 1
+		let startingParentIndex = 1
+		containingBlock[0].children[1].classList.add("face-up-first-animation")
+		let animationInterval = setInterval(() => {
+			if (parentIndex > containingBlock.length - 1) {
+				index++
+				containingBlock[startingParentIndex].children[index].classList.add(
+					"face-up-animation"
+				)
+				startingParentIndex++
+				parentIndex = startingParentIndex
+			} else {
+				containingBlock[parentIndex].children[index].classList.add(
+					"face-down-animation"
+				)
+				parentIndex++
+			}
+			if (index > 6) {
+				gameLoadingAnimation = false
+				containingBlock[0].children[1].classList.remove(
+					"face-up-first-animation"
+				)
+				containingBlock.forEach((ele) => {
+					for (let index = 0; index < ele.children.length; index++) {
+						const element = ele.children[index]
+						if (element.classList.contains("face-down-animation")) {
+							element.classList.remove("face-down-animation")
+						}
+						if (element.classList.contains("face-up-animation")) {
+							element.classList.remove("face-up-animation")
+						}
+					}
+				})
+				clearInterval(animationInterval)
+				gameLoadingAnimation = false
+			}
+		}, 50)
+	}
+	function startGame() {
+		cardTypeWithComponent.forEach((card) => {
+			card.components.forEach((component) => {
+				const obj = <card>{
+					card: card.card,
+					component: component.component,
+				}
+				stockPile.push(obj)
+			})
+		})
+		shuffleAndArrangeCards()
 		let startGameTimeout = setTimeout(() => {
-			let index = 1
-			let parentIndex = 1
-			let startingParentIndex = 1
 			const containingBlock = document.querySelectorAll(".containing_block")
-
 			containingBlock.forEach((ele) => {
 				const block = ele as HTMLDivElement
 				alignElements(block)
 			})
-			shuffleSound.play()
-			containingBlock[0].children[1].classList.add("face-up-first-animation")
-			let animationInterval = setInterval(() => {
-				if (parentIndex > containingBlock.length - 1) {
-					index++
-					containingBlock[startingParentIndex].children[index].classList.add(
-						"face-up-animation"
-					)
-					startingParentIndex++
-					parentIndex = startingParentIndex
-				} else {
-					containingBlock[parentIndex].children[index].classList.add(
-						"face-down-animation"
-					)
-					parentIndex++
-				}
-				if (index > 6) {
-					gameLoadingAnimation = false
-					containingBlock[0].children[1].classList.remove(
-						"face-up-first-animation"
-					)
-					containingBlock.forEach((ele) => {
-						for (let index = 0; index < ele.children.length; index++) {
-							const element = ele.children[index]
-							if (element.classList.contains("face-down-animation")) {
-								element.classList.remove("face-down-animation")
-							}
-							if (element.classList.contains("face-up-animation")) {
-								element.classList.remove("face-up-animation")
-							}
-						}
-					})
-					clearInterval(animationInterval)
-					clearTimeout(startGameTimeout)
-				}
-			}, 50)
+			playStartAnimationAndAlignCards()
+			clearTimeout(startGameTimeout)
 		}, 5)
-	}
-	function startGame() {
-		playStartAnimationAndAlignCards()
-		shuffleAndArrangeCards()
 		timeInterval = setInterval(() => {
 			time.seconds++
 			if (time.seconds > 59) {
@@ -248,6 +251,13 @@
 		}, 1000)
 	}
 	function startNewGame() {
+		loader = true
+		if (win) {
+			win = false
+		}
+		if (!gameStarted) {
+			gameStarted = true
+		}
 		clickSound.play()
 		stockPile = <Array<card>>[]
 		wastePile = <Array<card>>[]
@@ -259,13 +269,11 @@
 		foundation[1] = <Array<card>>[]
 		foundation[2] = <Array<card>>[]
 		foundation[3] = <Array<card>>[]
-		tableau = tableau
-		foundation = foundation
 		clearInterval(timeInterval)
 		time.minutes = 0
 		time.seconds = 0
+		totalCards = 52
 		menuToggled = false
-		let mainTimeout: number
 		cardTypeWithComponent.forEach((card) => {
 			card.components.forEach((component) => {
 				const obj = <card>{
@@ -275,20 +283,32 @@
 				stockPile.push(obj)
 			})
 		})
+		let mainTimeout: number
+
+		shuffleAndArrangeCards()
+		tableau = tableau
+		wastePile = wastePile
+		stockPile = stockPile
+		foundation = foundation
+		gameLoadingAnimation = true
+
+		const containingBlock = document.querySelectorAll(".containing_block")
+		containingBlock.forEach((ele) => {
+			const block = ele as HTMLDivElement
+			alignElements(block)
+		})
 		mainTimeout = setTimeout(() => {
-			shuffleAndArrangeCards()
-			tableau = tableau
-			wastePile = wastePile
-			stockPile = stockPile
 			playStartAnimationAndAlignCards()
 			clearTimeout(mainTimeout)
-		}, 1000)
-		timeInterval = setInterval(() => {
-			time.seconds++
-			if (time.seconds > 59) {
-				time.seconds = 0
-				time.minutes += 1
-			}
+			loader = false
+
+			timeInterval = setInterval(() => {
+				time.seconds++
+				if (time.seconds > 59) {
+					time.seconds = 0
+					time.minutes += 1
+				}
+			}, 1000)
 		}, 1000)
 	}
 	function pauseAndPlayGame() {
@@ -745,6 +765,9 @@
 	role="application"
 	class="min-h-screen w-screen pt-12 overflow-hidden relative isolate"
 >
+	{#if loader}
+		<Loader />
+	{/if}
 	{#if win}
 		<div
 			id="success"
@@ -761,7 +784,7 @@
 					You Win
 				</span>
 				<button
-					on:click={newGame}
+					on:click={startNewGame}
 					class="bg-blue-500 border border-blue-500 transition-colors hover:bg-transparent text-white text-2xl py-2 px-8 rounded capitalize"
 				>
 					New Game
