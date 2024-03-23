@@ -108,6 +108,7 @@
 			faceUp: <Array<card>>[],
 		},
 	]
+
 	const emptyFoundation = <TFoundation>{
 		0: <Array<card>>[],
 		1: <Array<card>>[],
@@ -158,7 +159,25 @@
 			currentLength: 0,
 		},
 	}
+	function reset() {
+		stockPile = <Array<card>>[]
+		wastePile = <Array<card>>[]
+		tableau.forEach((ele) => {
+			ele.faceDown = <Array<card>>[]
+			ele.faceUp = <Array<card>>[]
+		})
+		foundation[0] = <Array<card>>[]
+		foundation[1] = <Array<card>>[]
+		foundation[2] = <Array<card>>[]
+		foundation[3] = <Array<card>>[]
 
+		clearInterval(timeInterval)
+		time.minutes = 0
+		time.seconds = 0
+		totalCards = 52
+		score = 0
+		menuToggled = false
+	}
 	function setCardFaceDown(number: number) {
 		for (let index = 0; index < number; index++) {
 			let randomNumber = Math.floor(Math.random() * totalCards)
@@ -222,6 +241,15 @@
 			}
 		}, 50)
 	}
+	function setTimer() {
+		timeInterval = setInterval(() => {
+			time.seconds++
+			if (time.seconds > 59) {
+				time.seconds = 0
+				time.minutes += 1
+			}
+		}, 1000)
+	}
 	function startGame() {
 		cardTypeWithComponent.forEach((card) => {
 			card.components.forEach((component) => {
@@ -242,38 +270,16 @@
 			playStartAnimationAndAlignCards()
 			clearTimeout(startGameTimeout)
 		}, 5)
-		timeInterval = setInterval(() => {
-			time.seconds++
-			if (time.seconds > 59) {
-				time.seconds = 0
-				time.minutes += 1
-			}
-		}, 1000)
+		setTimer()
 	}
 	function startNewGame() {
 		loader = true
 		if (win) {
 			win = false
 		}
-		if (!gameStarted) {
-			gameStarted = true
-		}
+
 		clickSound.play()
-		stockPile = <Array<card>>[]
-		wastePile = <Array<card>>[]
-		tableau.forEach((ele) => {
-			ele.faceDown = <Array<card>>[]
-			ele.faceUp = <Array<card>>[]
-		})
-		foundation[0] = <Array<card>>[]
-		foundation[1] = <Array<card>>[]
-		foundation[2] = <Array<card>>[]
-		foundation[3] = <Array<card>>[]
-		clearInterval(timeInterval)
-		time.minutes = 0
-		time.seconds = 0
-		totalCards = 52
-		menuToggled = false
+		reset()
 		cardTypeWithComponent.forEach((card) => {
 			card.components.forEach((component) => {
 				const obj = <card>{
@@ -290,25 +296,20 @@
 		wastePile = wastePile
 		stockPile = stockPile
 		foundation = foundation
+		score = score
 		gameLoadingAnimation = true
 
-		const containingBlock = document.querySelectorAll(".containing_block")
-		containingBlock.forEach((ele) => {
-			const block = ele as HTMLDivElement
-			alignElements(block)
-		})
 		mainTimeout = setTimeout(() => {
+			const containingBlock = document.querySelectorAll(".containing_block")
+			containingBlock.forEach((ele) => {
+				const block = ele as HTMLDivElement
+				alignElements(block)
+			})
 			playStartAnimationAndAlignCards()
 			clearTimeout(mainTimeout)
 			loader = false
 
-			timeInterval = setInterval(() => {
-				time.seconds++
-				if (time.seconds > 59) {
-					time.seconds = 0
-					time.minutes += 1
-				}
-			}, 1000)
+			setTimer()
 		}, 1000)
 	}
 	function pauseAndPlayGame() {
@@ -318,20 +319,8 @@
 			clearInterval(timeInterval)
 			clearInterval(streakInterval)
 		} else {
-			timeInterval = setInterval(() => {
-				time.seconds++
-				if (time.seconds > 59) {
-					time.seconds = 0
-					time.minutes += 1
-				}
-			}, 1000)
-			streakInterval = setInterval(() => {
-				streak--
-				if (streak < 1) {
-					streak = 5
-					clearInterval(streakInterval)
-				}
-			}, 1000)
+			setTimer()
+			streaking()
 		}
 	}
 	function newGame() {
