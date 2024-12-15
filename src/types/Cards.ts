@@ -1,13 +1,10 @@
-import { type ComponentType } from "svelte"
-type component = {
-    component: ComponentType
-}
-export type cardComponent = Array<component>
 
+export type component = __sveltets_2_IsomorphicComponent<{ class_props: string; }, { [evt: string]: CustomEvent<any>; }, {}, {}, string>
+export type cardComponent = component[]
 
 export type card = {
     card: string
-    component: ComponentType
+    component: component
 }
 
 export type TFoundation = {

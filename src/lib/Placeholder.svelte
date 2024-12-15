@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { ComponentType } from "svelte"
 	import Ace from "./Cards/Ace.svelte"
 	import Queen from "./Cards/Queen.svelte"
 	import King from "./Cards/King.svelte"
@@ -15,17 +14,11 @@
 	import Two from "./Cards/Two.svelte"
 	import Spade from "./icons/Spade.svelte"
 	import Club from "./icons/Club.svelte"
-	type card = {
-		card: string
-		component?: ComponentType
-	}
-	export let card: card
-	let class_props: string
-	let component: ComponentType
+	import type { card, component } from "../types/Cards"
+	let { card }: { card: card } = $props()
+	let class_props = $state<string>()
+	let Component = card.component
 
-	if (card?.component) {
-		component = card.component
-	}
 	if (card?.component === Spade || card?.component === Club) {
 		class_props = "_black"
 	} else {
@@ -33,32 +26,30 @@
 	}
 </script>
 
-{#if card?.component}
-	{#if card?.card === "Ace"}
-		<Ace {component} {class_props} />
-	{:else if card?.card === "King"}
-		<King {component} {class_props} />
-	{:else if card?.card === "Queen"}
-		<Queen {component} {class_props} />
-	{:else if card?.card === "Jack"}
-		<Jack {component} {class_props} />
-	{:else if card?.card === "Two"}
-		<Two {component} {class_props} />
-	{:else if card?.card === "Three"}
-		<Three {component} {class_props} />
-	{:else if card?.card === "Four"}
-		<Four {component} {class_props} />
-	{:else if card?.card === "Five"}
-		<Five {component} {class_props} />
-	{:else if card?.card === "Six"}
-		<Six {component} {class_props} />
-	{:else if card?.card === "Seven"}
-		<Seven {component} {class_props} />
-	{:else if card?.card === "Eight"}
-		<Eight {component} {class_props} />
-	{:else if card?.card === "Nine"}
-		<Nine {component} {class_props} />
-	{:else}
-		<Ten {component} {class_props} />
-	{/if}
+{#if card?.card === "Ace"}
+	<Ace {Component} {class_props} />
+{:else if card?.card === "King"}
+	<King {Component} {class_props} />
+{:else if card?.card === "Queen"}
+	<Queen {Component} {class_props} />
+{:else if card?.card === "Jack"}
+	<Jack {Component} {class_props} />
+{:else if card?.card === "Two"}
+	<Two {Component} {class_props} />
+{:else if card?.card === "Three"}
+	<Three {Component} {class_props} />
+{:else if card?.card === "Four"}
+	<Four {Component} {class_props} />
+{:else if card?.card === "Five"}
+	<Five {Component} {class_props} />
+{:else if card?.card === "Six"}
+	<Six {Component} {class_props} />
+{:else if card?.card === "Seven"}
+	<Seven {Component} {class_props} />
+{:else if card?.card === "Eight"}
+	<Eight {Component} {class_props} />
+{:else if card?.card === "Nine"}
+	<Nine {Component} {class_props} />
+{:else}
+	<Ten {Component} {class_props} />
 {/if}

@@ -1,11 +1,12 @@
 <script lang="ts">
-	import type { ComponentType } from "svelte"
-
-	export let component: ComponentType
-	export let class_props: string
-	export let classes: string
+	import type { component } from "../../types/Cards"
+	let {
+		Component,
+		class_props,
+		classes,
+	}: { Component: component; class_props: string; classes: string } = $props()
 </script>
 
 <span class={classes}>
-	<svelte:component this={component} {class_props} />
+	<Component {class_props} />
 </span>
