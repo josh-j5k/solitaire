@@ -4,7 +4,7 @@ import { dragAndDropState, mousePositon } from '../store.svelte'
 
 const { dragEndSound } = audio()
 
-export default function dragEnd(e: DragEvent) {
+export default function dragEnd(e: MouseEvent) {
     dragEndSound.load()
     const element = e.target as HTMLDivElement
     element.style.transform = "translate(0)"
@@ -43,6 +43,6 @@ export default function dragEnd(e: DragEvent) {
     if (dragAndDropState.isDraggedFromWastePile) {
         element.classList.add("stack_face_up")
     }
-
+    document.onmousemove = null
     resetZIndex()
 }

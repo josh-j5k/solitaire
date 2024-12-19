@@ -1,6 +1,6 @@
 import { dragAndDropState, mousePositon } from '../store.svelte'
 
-export default function drag(e: DragEvent) {
+export default function ondrag(e: DragEvent) {
     const element = e.target as HTMLDivElement
     const parent = element.offsetParent as HTMLDivElement
     const indices = parent.querySelectorAll("div[data-index]")
@@ -13,7 +13,7 @@ export default function drag(e: DragEvent) {
     element.classList.add("dragging")
     let centerX = e.clientX - mousePositon.x!
     let centerY = e.clientY - mousePositon.y!
-    console.log(centerX, centerY);
+    document.documentElement.style.setProperty('--left', centerX.toString())
     element.style.transform = `translateX(${centerX.toString()}px) translateY(${centerY.toString()}px)`
     // element.style['--moz-transform'] = `translateX(${centerX.toString()}px) translateY(${centerY.toString()}px)`
 

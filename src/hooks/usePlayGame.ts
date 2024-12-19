@@ -4,26 +4,25 @@ import Club from "../lib/icons/Club.svelte"
 import Diamond from "../lib/icons/Diamond.svelte"
 import Heart from "../lib/icons/Heart.svelte"
 import audio from './useAudio'
-import type { cardComponent, card } from '../types/Cards'
+import type { cardComponent, card, component } from '../types/Cards'
 import { shuffleAndArrangeCards, alignElements } from './useMoves'
 import { streaking } from './useScore'
 
 
 const { shuffleSound, clickSound } = audio()
-const arr = ["King", "Ace", "Queen", "Nine", "Jack", "Ten", "Eight", "Seven", "Five", "Six", "Three", "Four", "Two",]
+const arr = ["Ace", "King", "Queen", "Nine", "Jack", "Ten", "Eight", "Seven", "Five", "Six", "Three", "Four", "Two",]
 
-let components = ['Spade', "Diamond", "Heart", "Club"]
-const cardTypeWithComponent = arr.map((card) => {
-    return {
-        card,
-        components: components.map((component) => component),
-    }
-})
-
+let components = ['Spade', "Diamond", "Heart", "Club"] as component[]
+function setStockPile() {
+    arr.forEach(item => {
+        components.forEach(type => {
+            stockPile.push({ card: item, component: type })
+        })
+    })
+}
 
 function playStartAnimationAndAlignCards() {
     const containingBlock = document.querySelectorAll(".containing_block")
-    shuffleSound.play()
     let index = 1
     let parentIndex = 1
     let startingParentIndex = 1
@@ -43,7 +42,7 @@ function playStartAnimationAndAlignCards() {
             parentIndex++
         }
         if (index > 6) {
-            store.gameLoadingAnimation = false
+
             containingBlock[0].children[1].classList.remove(
                 "face-up-first-animation"
             )
@@ -74,71 +73,39 @@ function setTimer() {
     }, 1000)
 }
 
-function startGame() {
-    cardTypeWithComponent.forEach((card) => {
-        card.components.forEach((component) => {
-            const obj = <card>{
-                card: card.card,
-                component: component,
-            }
-            stockPile.push(obj)
-        })
-    })
-
-
-    shuffleAndArrangeCards()
-    let startGameTimeout = setTimeout(() => {
-        const containingBlock = document.querySelectorAll(".containing_block")
-        containingBlock.forEach((ele) => {
-            const block = ele as HTMLDivElement
-            alignElements(block)
-        })
-        playStartAnimationAndAlignCards()
-        clearTimeout(startGameTimeout)
-    }, 5)
-    setTimer()
-
-}
-
-export function startNewGame() {
-
+export function startGame() {
     resetStore()
-    if (store.win) store.win = false
-    if (store.menuToggled) store.menuToggled = false
     store.loader = true
-    clickSound.play()
-    cardTypeWithComponent.forEach((card) => {
-        card.components.forEach((component) => {
-            const obj = <card>{
-                card: card.card,
-                component: component,
-            }
-            stockPile.push(obj)
-        })
-    })
-    let mainTimeout: number
-
+    if (store.win) store.win = false
+    if (!store.gameStarted) store.gameStarted = true
+    if (store.menuToggled) store.menuToggled = false
+    if (!store.gameLoadingAnimation) store.gameLoadingAnimation = true
+    shuffleSound.load()
+    setStockPile()
     shuffleAndArrangeCards()
 
-    store.gameLoadingAnimation = true
 
-    mainTimeout = setTimeout(() => {
-        const containingBlock = document.querySelectorAll(".containing_block")
-        containingBlock.forEach((ele) => {
-            const block = ele as HTMLDivElement
-            alignElements(block)
-        })
-        playStartAnimationAndAlignCards()
-        clearTimeout(mainTimeout)
+    let startGameTimeout = setTimeout(() => {
         store.loader = false
+        shuffleSound.play()
+        setTimeout(() => {
+            const containingBlock = document.querySelectorAll(".containing_block")
+            containingBlock.forEach((ele) => {
+                const block = ele as HTMLDivElement
+                alignElements(block)
+            })
+            playStartAnimationAndAlignCards()
+            clearTimeout(startGameTimeout)
+            setTimer()
 
-        setTimer()
-    }, 2000)
+        }, 10);
+    }, 1000)
 
 }
+
 
 export function pauseAndPlayGame() {
-    shuffleSound.load()
+    clickSound.load()
     clickSound.play()
     store.pause = !store.pause
     if (store.pause) {
@@ -149,15 +116,5 @@ export function pauseAndPlayGame() {
         streaking()
     }
 }
-export function newGame() {
-    clickSound.play()
-    if (store.win) {
-        store.win = false
-    }
-    if (!store.gameStarted) {
-        store.gameStarted = true
-    }
 
-    startGame()
-}
 

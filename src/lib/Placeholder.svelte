@@ -12,14 +12,14 @@
 	import Four from "./Cards/Four.svelte"
 	import Three from "./Cards/Three.svelte"
 	import Two from "./Cards/Two.svelte"
-	import Spade from "./icons/Spade.svelte"
-	import Club from "./icons/Club.svelte"
+
 	import type { card } from "../types/Cards"
+
 	let { card }: { card: card } = $props()
 	let class_props = $state<string>()
-	let component = card.component
+	const component = card.component
 
-	switch (card.component) {
+	switch (component) {
 		case "Spade":
 		case "Club":
 			class_props = "_black"

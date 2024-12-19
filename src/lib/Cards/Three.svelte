@@ -13,13 +13,11 @@
 
 <CardNumberTypeTop {component} {class_props} card_number="3" />
 <CardNumberTypeBottom {component} {class_props} card_number="3" />
-<div class="flex-col items-center justify-between h-full py-4 center-svg-md">
-	<CardType classes="w-8 aspect-square" {component} {class_props} />
-	<CardType classes="w-8 aspect-square" {component} {class_props} />
-	<CardType classes="w-8 aspect-square rotate-180" {component} {class_props} />
+<div class="flex flex-col items-center justify-between h-full py-4 -lg:hidden">
+	<CardType classes="w-6 aspect-square" {component} {class_props} />
+	<CardType classes="w-6 aspect-square" {component} {class_props} />
+	<CardType classes="w-6 aspect-square rotate-180" {component} {class_props} />
 </div>
-<span
-	class="w-10 aspect-square absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 center-svg_-md"
->
+<span class="w-10 aspect-square absolute mx-auto inset-0 lg:hidden">
 	<Component {component} {class_props} />
 </span>

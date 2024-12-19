@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { store } from "../store.svelte"
-	import { pauseAndPlayGame, startNewGame } from "../hooks/usePlayGame"
+	import { pauseAndPlayGame, startGame } from "../hooks/usePlayGame"
 
 	const { clickSound } = $props()
 
@@ -15,7 +15,7 @@
 		clickSound.play()
 		if (store.difficulty !== e) {
 			store.difficulty = e
-			startNewGame()
+			startGame()
 		}
 	}
 </script>
@@ -38,7 +38,7 @@
 			<span>
 				<svg
 					viewBox="0 0 24 24"
-					class="w-8 h-8"
+					class="w-6 h-8"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g
@@ -60,7 +60,7 @@
 				>
 			</span>
 		</button>
-		<button onclick={startNewGame} class="flex gap-4 group">
+		<button onclick={startGame} class="flex gap-4 group">
 			<span>
 				<svg
 					viewBox="0 0 32 32"

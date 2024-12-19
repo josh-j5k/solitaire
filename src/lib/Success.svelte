@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { startNewGame } from "../hooks/usePlayGame"
+	import { startGame } from "../hooks/usePlayGame"
 	import { store } from "../store.svelte"
 </script>
 
@@ -18,7 +18,7 @@
 			You Win
 		</span>
 		<button
-			onclick={startNewGame}
+			onclick={startGame}
 			class="bg-blue-500 border border-blue-500 transition-colors hover:bg-transparent text-white text-2xl py-2 px-8 rounded capitalize"
 		>
 			New Game

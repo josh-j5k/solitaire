@@ -11,14 +11,14 @@
 
 <CardNumberTypeTop {component} {class_props} card_number="Q" />
 
-<span
-	class="w-full block aspect-square absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2"
->
-	<img
-		draggable="false"
-		src="src\assets\queen_no_type.png"
-		alt=""
-		class="w-3/5 mx-auto"
-	/>
-</span>
+<div class="relative h-full flex items-center">
+	<span class="w-full aspect-square">
+		<img
+			draggable="false"
+			src="src\assets\queen_no_type.png"
+			alt=""
+			class="w-4/5 -lg:w-3/5 mx-auto"
+		/>
+	</span>
+</div>
 <CardNumberTypeBottom {component} {class_props} card_number="Q" />

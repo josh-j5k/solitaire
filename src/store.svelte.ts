@@ -64,9 +64,9 @@ export let mousePositon = $state<{ x: number | undefined, y: number | undefined 
     x: undefined, y: undefined
 })
 
-export let dragAndDropState = <{ activeCard: string | undefined, activeCardElement: HTMLElement | undefined, activeCardNumber: number | undefined, activeCardColor: string | undefined, activeCardParentIndex: number | undefined, activeCardIndex: number | undefined, top: string | undefined, left: string | undefined, isDraggedFromWastePile: boolean | undefined, height: number, offsetTop: number, indices: number | undefined }>{
-    height: 170,
-    offsetTop: 20
+export let dragAndDropState = <{ activeCard: string | undefined, activeCardElement: HTMLElement | undefined, activeCardNumber: number | undefined, activeCardColor: string | undefined, activeCardParentIndex: number | undefined, activeCardIndex: number | undefined, top: string | undefined, left: string | undefined, isDraggedFromWastePile: boolean | undefined, height: number, offsetTop: number, dataIndex: NodeListOf<Element> | undefined }>{
+    height: 150,
+    offsetTop: 25
 }
 
 export function resetStore() {

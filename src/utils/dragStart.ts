@@ -11,8 +11,6 @@ export default function dragStart(e: DragEvent) {
     const dataFoundation = parent?.getAttribute("data-foundation")
     const dataTableau = parent?.getAttribute("data-tableau")
     dragStartSound.play()
-    console.log(element);
-
     dragAndDropState.top = element.style.top
     dragAndDropState.left = element.style.left
     dragAndDropState.activeCardIndex = parseInt(element.getAttribute("data-index")!)
@@ -40,4 +38,6 @@ export default function dragStart(e: DragEvent) {
     dragAndDropState.activeCardColor = element.getAttribute("data-card-color")!
     dragAndDropState.activeCardElement = element
     e.dataTransfer?.setDragImage(img, 0, 0)
+
+
 }

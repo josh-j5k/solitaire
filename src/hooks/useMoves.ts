@@ -1,4 +1,5 @@
 import { tableau, stockPile, nonReactiveState, dragAndDropState, wastePile, store } from '../store.svelte'
+import type { card } from '../types/Cards'
 import audio from './useAudio'
 
 const { reDeal, dealCard, multiple } = audio()
@@ -11,10 +12,10 @@ function setCardFaceDown(number: number) {
         nonReactiveState.totalCards -= 1
     }
 }
+function shuffleArray(array: card[]) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[array[i], array[j]] = [array[j], array[i]]; } return array; }
 export function shuffleAndArrangeCards() {
     stockPile.sort(() => (Math.random() > 0.5 ? 1 : -1))
     for (let index = 0; index < 7; index++) {
-
         let randomNumber = Math.floor(Math.random() * nonReactiveState.totalCards)
         tableau[index].faceUp.push(stockPile[randomNumber])
         stockPile.splice(randomNumber, 1)

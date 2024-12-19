@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { useDimensionDesign } from "../helpers/DimensionDesigns"
-	// const { dimensions } = useDimensionDesign()
+	const { dimensions } = useDimensionDesign()
 </script>
 
-<div class="dimensions"> </div>
+<div class="w-full h-[140px]"> </div>
 
 <style scoped>
 	div {
