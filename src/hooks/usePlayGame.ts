@@ -1,4 +1,4 @@
-import { stockPile, wastePile, tableau, foundation, time, nonReactiveState, state } from '../store.svelte'
+import { stockPile, time, nonReactiveState, store, resetStore } from '../store.svelte'
 import Spade from "../lib/icons/Spade.svelte"
 import Club from "../lib/icons/Club.svelte"
 import Diamond from "../lib/icons/Diamond.svelte"
@@ -12,7 +12,7 @@ import { streaking } from './useScore'
 const { shuffleSound, clickSound } = audio()
 const arr = ["King", "Ace", "Queen", "Nine", "Jack", "Ten", "Eight", "Seven", "Five", "Six", "Three", "Four", "Two",]
 
-let components = [Spade, Diamond, Heart, Club] as cardComponent
+let components = ['Spade', "Diamond", "Heart", "Club"]
 const cardTypeWithComponent = arr.map((card) => {
     return {
         card,
@@ -20,23 +20,6 @@ const cardTypeWithComponent = arr.map((card) => {
     }
 })
 
-
-function reset() {
-    stockPile.length = 0
-    wastePile.length = 0
-    tableau.forEach((ele) => {
-        ele.faceDown.length = 0
-        ele.faceUp.length = 0
-    })
-    for (const [key, value] of Object.entries(foundation)) value.length = 0
-
-    clearInterval(nonReactiveState.timeInterval)
-    time.minutes = 0
-    time.seconds = 0
-    nonReactiveState.totalCards = 52
-    state.score = 0
-    state.menuToggled = false
-}
 
 function playStartAnimationAndAlignCards() {
     const containingBlock = document.querySelectorAll(".containing_block")
@@ -60,7 +43,7 @@ function playStartAnimationAndAlignCards() {
             parentIndex++
         }
         if (index > 6) {
-            state.gameLoadingAnimation = false
+            store.gameLoadingAnimation = false
             containingBlock[0].children[1].classList.remove(
                 "face-up-first-animation"
             )
@@ -76,7 +59,7 @@ function playStartAnimationAndAlignCards() {
                 }
             })
             clearInterval(animationInterval)
-            state.gameLoadingAnimation = false
+            store.gameLoadingAnimation = false
         }
     }, 50)
 }
@@ -101,6 +84,8 @@ function startGame() {
             stockPile.push(obj)
         })
     })
+
+
     shuffleAndArrangeCards()
     let startGameTimeout = setTimeout(() => {
         const containingBlock = document.querySelectorAll(".containing_block")
@@ -112,15 +97,16 @@ function startGame() {
         clearTimeout(startGameTimeout)
     }, 5)
     setTimer()
+
 }
 
 export function startNewGame() {
-    state.loader = true
-    if (state.win) {
-        state.win = false
-    }
+
+    resetStore()
+    if (store.win) store.win = false
+    if (store.menuToggled) store.menuToggled = false
+    store.loader = true
     clickSound.play()
-    reset()
     cardTypeWithComponent.forEach((card) => {
         card.components.forEach((component) => {
             const obj = <card>{
@@ -134,7 +120,7 @@ export function startNewGame() {
 
     shuffleAndArrangeCards()
 
-    state.gameLoadingAnimation = true
+    store.gameLoadingAnimation = true
 
     mainTimeout = setTimeout(() => {
         const containingBlock = document.querySelectorAll(".containing_block")
@@ -144,16 +130,18 @@ export function startNewGame() {
         })
         playStartAnimationAndAlignCards()
         clearTimeout(mainTimeout)
-        state.loader = false
+        store.loader = false
 
         setTimer()
-    }, 1000)
+    }, 2000)
+
 }
 
 export function pauseAndPlayGame() {
+    shuffleSound.load()
     clickSound.play()
-    state.pause = !state.pause
-    if (state.pause) {
+    store.pause = !store.pause
+    if (store.pause) {
         clearInterval(nonReactiveState.timeInterval)
         clearInterval(nonReactiveState.streakInterval)
     } else {
@@ -163,11 +151,11 @@ export function pauseAndPlayGame() {
 }
 export function newGame() {
     clickSound.play()
-    if (state.win) {
-        state.win = false
+    if (store.win) {
+        store.win = false
     }
-    if (!state.gameStarted) {
-        state.gameStarted = true
+    if (!store.gameStarted) {
+        store.gameStarted = true
     }
 
     startGame()

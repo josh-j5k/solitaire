@@ -1,5 +1,5 @@
 
-export type component = __sveltets_2_IsomorphicComponent<{ class_props: string; }, { [evt: string]: CustomEvent<any>; }, {}, {}, string>
+export type component = 'Spade' | "Diamond" | "Heart" | "Club"
 export type cardComponent = component[]
 
 export type card = {

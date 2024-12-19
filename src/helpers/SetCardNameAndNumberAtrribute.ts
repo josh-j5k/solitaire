@@ -1,17 +1,14 @@
 
-import Spade from "../lib/icons/Spade.svelte"
-import Club from "../lib/icons/Club.svelte"
-import Diamond from "../lib/icons/Diamond.svelte"
 import type { component } from "../types/Cards"
 
 export function setCardNameAndNumberAtrribute() {
     function cardType(component: component): string {
         switch (component) {
-            case Spade:
+            case "Spade":
                 return "spade";
-            case Club:
+            case "Club":
                 return "club";
-            case Diamond:
+            case "Diamond":
                 return "diamond";
             default:
                 return "heart";
@@ -50,7 +47,7 @@ export function setCardNameAndNumberAtrribute() {
 
     }
     function cardColor(component: component): string {
-        if (component === Spade || component === Club) {
+        if (component === "Spade" || component === "Club") {
             return 'black'
         }
         return 'red'

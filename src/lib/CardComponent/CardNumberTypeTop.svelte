@@ -1,10 +1,12 @@
 <script lang="ts">
 	import type { component } from "../../types/Cards"
+	import Component from "../Component.svelte"
+
 	let {
-		Component,
 		class_props,
+		component,
 		card_number,
-	}: { Component: component; class_props: string; card_number: string } =
+	}: { class_props: string; component: component; card_number: string } =
 		$props()
 </script>
 
@@ -13,6 +15,6 @@
 		{card_number}
 	</span>
 	<span class="w-3 aspect-square">
-		<Component {class_props} />
+		<Component {component} {class_props} />
 	</span>
 </div>

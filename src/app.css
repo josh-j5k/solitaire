@@ -11,6 +11,8 @@
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	--top: 0;
+	--left: 0;
 }
 body {
 	overflow-x: hidden;
@@ -26,6 +28,33 @@ body {
 }
 .fill-_red {
 	fill: red;
+}
+.dimensions {
+	height: 170px;
+	width: 100%;
+}
+.center-svg_-md {
+	display: none;
+}
+.center-svg-md {
+	display: flex;
+}
+@media (max-width: 950px) and (orientation: landscape) or (orientation: portrait) {
+	#main {
+		overflow: hidden;
+	}
+	.dimensions {
+		height: 100px;
+	}
+	.center-svg_-md {
+		display: block;
+	}
+	.center-svg-md {
+		display: none;
+	}
+	.stack_face_up {
+		background-color: #fff;
+	}
 }
 
 @tailwind base;

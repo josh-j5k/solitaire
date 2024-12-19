@@ -22,6 +22,9 @@ export default function audio() {
     const shuffleSound = new Audio(
         "/src/assets/audio/Solitaire Card shuffle SFX - Page 2.m4a"
     )
+    const multiple = new Audio(
+        "/src/assets/audio/multiple_flips.mp3"
+    )
 
-    return { dealCard, dragEndSound, dragStartSound, dropSound, clickSound, reDeal, winningSound, successAudio, shuffleSound }
+    return { dealCard, dragEndSound, dragStartSound, dropSound, clickSound, reDeal, winningSound, successAudio, shuffleSound, multiple }
 }

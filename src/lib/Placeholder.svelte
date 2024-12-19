@@ -14,42 +14,47 @@
 	import Two from "./Cards/Two.svelte"
 	import Spade from "./icons/Spade.svelte"
 	import Club from "./icons/Club.svelte"
-	import type { card, component } from "../types/Cards"
+	import type { card } from "../types/Cards"
 	let { card }: { card: card } = $props()
 	let class_props = $state<string>()
-	let Component = card.component
+	let component = card.component
 
-	if (card?.component === Spade || card?.component === Club) {
-		class_props = "_black"
-	} else {
-		class_props = "_red"
+	switch (card.component) {
+		case "Spade":
+		case "Club":
+			class_props = "_black"
+			break
+
+		default:
+			class_props = "_red"
+			break
 	}
 </script>
 
 {#if card?.card === "Ace"}
-	<Ace {Component} {class_props} />
+	<Ace {component} {class_props} />
 {:else if card?.card === "King"}
-	<King {Component} {class_props} />
+	<King {component} {class_props} />
 {:else if card?.card === "Queen"}
-	<Queen {Component} {class_props} />
+	<Queen {component} {class_props} />
 {:else if card?.card === "Jack"}
-	<Jack {Component} {class_props} />
+	<Jack {component} {class_props} />
 {:else if card?.card === "Two"}
-	<Two {Component} {class_props} />
+	<Two {component} {class_props} />
 {:else if card?.card === "Three"}
-	<Three {Component} {class_props} />
+	<Three {component} {class_props} />
 {:else if card?.card === "Four"}
-	<Four {Component} {class_props} />
+	<Four {component} {class_props} />
 {:else if card?.card === "Five"}
-	<Five {Component} {class_props} />
+	<Five {component} {class_props} />
 {:else if card?.card === "Six"}
-	<Six {Component} {class_props} />
+	<Six {component} {class_props} />
 {:else if card?.card === "Seven"}
-	<Seven {Component} {class_props} />
+	<Seven {component} {class_props} />
 {:else if card?.card === "Eight"}
-	<Eight {Component} {class_props} />
+	<Eight {component} {class_props} />
 {:else if card?.card === "Nine"}
-	<Nine {Component} {class_props} />
+	<Nine {component} {class_props} />
 {:else}
-	<Ten {Component} {class_props} />
+	<Ten {component} {class_props} />
 {/if}
