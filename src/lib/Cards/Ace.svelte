@@ -13,8 +13,8 @@
 <CardNumberTypeTop {component} {class_props} card_number="A" />
 
 <div class="relative h-full flex items-center justify-center">
-	<span class="w-14 -lg:w-10 aspect-square">
-		<Component {component} {class_props} />
+	<span class="w-14 -lg:w-6 aspect-square">
+		<Component {component} />
 	</span>
 </div>
 

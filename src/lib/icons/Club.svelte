@@ -1,14 +1,11 @@
-<script lang="ts">
-	const { class_props }: { class_props: string } = $props()
-</script>
-
 <svg
-	class="fill-{class_props} iconify iconify--emojione-monotone"
+	class="iconify iconify--emojione-monotone"
 	viewBox="0 0 64 64"
 	xmlns="http://www.w3.org/2000/svg"
 	xmlns:xlink="http://www.w3.org/1999/xlink"
 	aria-hidden="true"
 	role="img"
+	fill="black"
 	preserveAspectRatio="xMidYMid meet"
 	><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"
 	></g><g

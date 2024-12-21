@@ -1,9 +1,5 @@
-<script lang="ts">
-	const { class_props }: { class_props: string } = $props()
-</script>
-
 <svg
-	class="fill-{class_props} "
+	fill="red"
 	viewBox="0 0 32 32"
 	version="1.1"
 	xmlns="http://www.w3.org/2000/svg"

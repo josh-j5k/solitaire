@@ -1,7 +1,8 @@
 import { store, nonReactiveState, validateScore, } from '../store.svelte'
-import audio from './useAudio'
+import { winningSound } from '../utils/audio'
 
-const { winningSound } = audio()
+
+
 export function setScore(isFoundation: boolean) {
     if (nonReactiveState.streakInterval) {
         isFoundation ? (store.score += Math.round(15 * difficultyMultiplier())) : (store.score += Math.round(15 * difficultyMultiplier()))

@@ -5,18 +5,15 @@
 	import Heart from "./icons/Heart.svelte"
 	import Spade from "./icons/Spade.svelte"
 
-	let {
-		component,
-		class_props,
-	}: { component: component; class_props: string } = $props()
+	let { component }: { component: component } = $props()
 </script>
 
 {#if component === "Spade"}
-	<Spade {class_props} />
+	<Spade />
 {:else if component === "Club"}
-	<Club {class_props} />
+	<Club />
 {:else if component === "Diamond"}
-	<Diamond {class_props} />
+	<Diamond />
 {:else}
-	<Heart {class_props} />
+	<Heart />
 {/if}

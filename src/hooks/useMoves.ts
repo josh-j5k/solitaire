@@ -1,8 +1,9 @@
-import { tableau, stockPile, nonReactiveState, dragAndDropState, wastePile, store } from '../store.svelte'
+import { tableau, stockPile, nonReactiveState, wastePile, store } from '../store.svelte'
 import type { card } from '../types/Cards'
-import audio from './useAudio'
+import { reDeal, dealCard, multiple } from '../utils/audio'
 
-const { reDeal, dealCard, multiple } = audio()
+
+
 
 function setCardFaceDown(number: number) {
     for (let index = 0; index < number; index++) {
@@ -43,7 +44,6 @@ export function flipCard(index: number) {
         setTimeout(() => {
             const parent = containingBlock[index] as HTMLDivElement
             const element = parent.children[parent.children.length - 1]
-            alignElements(parent)
             element.classList.add("flip-card")
         }, 100)
         setTimeout(() => {
@@ -71,12 +71,6 @@ export function revealAndRedealStockpile() {
 
     const element = stockPile.pop()!
     wastePile.push(element)
-    setTimeout(() => {
-        const currentWastePile = document.querySelectorAll(
-            'div[data-waste-pile="true"]'
-        )
-        currentWastePile[currentWastePile.length - 1].classList.add("reveal-card")
-    }, 0);
     if (store.difficulty === 'easy') {
         dealCard.play()
 
@@ -97,39 +91,25 @@ export function revealAndRedealStockpile() {
             if (number == 0) {
                 clearInterval(int)
             }
-            setTimeout(() => {
-                const currentWastePile = document.querySelectorAll(
-                    'div[data-waste-pile="true"]'
-                )
-                currentWastePile[currentWastePile.length - 1].classList.add("reveal-card")
 
-            }, 0);
 
         } else {
             clearInterval(int)
         }
     }, 100);
-    setTimeout(() => {
-        const currentWastePile = document.querySelectorAll(
-            'div[data-waste-pile="true"]'
-        )
-        const wastePileCardPosition = currentWastePile.length - 1
-        const wastePileCard = currentWastePile[wastePileCardPosition]
-        wastePileCard.classList.remove("reveal-card")
-        wastePileCard.classList.remove("hide-card")
-    }, 500)
+
 }
 
-export function alignElements(element: HTMLDivElement) {
-    const length = element.children.length
-    const adjLength = length - 1
-    const newHeight = adjLength * dragAndDropState.offsetTop + dragAndDropState.height
+// export function alignElements(element: HTMLDivElement) {
+//     const length = element.children.length
+//     const adjLength = length - 1
+//     const newHeight = adjLength * store.offsetTop + store.height
 
-    element.style.height = newHeight.toString() + "px"
-    for (let index = 1; index < length; index++) {
-        const top = (index - 1) * dragAndDropState.offsetTop
-        const ele = element.children[index] as HTMLDivElement
-        ele.style.top = top.toString() + "px"
-        ele.style.position = "absolute"
-    }
-}
+//     element.style.height = newHeight.toString() + "px"
+//     for (let index = 1; index < length; index++) {
+//         const top = (index - 1) * store.offsetTop
+//         const ele = element.children[index] as HTMLDivElement
+//         ele.style.top = top.toString() + "px"
+//         ele.style.position = "absolute"
+//     }
+// }

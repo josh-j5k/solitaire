@@ -14,7 +14,11 @@ export const store = $state({
     gameStarted: false,
     menuToggled: false,
     loader: false,
-    difficulty: 'easy'
+    difficulty: 'easy',
+    height: 150,
+    offsetTop: 25,
+    isMobile: false
+
 })
 export let nonReactiveState = <{ totalCards: number, streakInterval: number | undefined, timeInterval: number | undefined }>{
     totalCards: 52,
@@ -60,24 +64,11 @@ export let foundation = $state<TFoundation>({
     3: <Array<card>>[],
 })
 
-export let mousePositon = $state<{ x: number | undefined, y: number | undefined }>({
-    x: undefined, y: undefined
-})
-
-export let dragAndDropState = <{ activeCard: string | undefined, activeCardElement: HTMLElement | undefined, activeCardNumber: number | undefined, activeCardColor: string | undefined, activeCardParentIndex: number | undefined, activeCardIndex: number | undefined, top: string | undefined, left: string | undefined, isDraggedFromWastePile: boolean | undefined, height: number, offsetTop: number, dataIndex: NodeListOf<Element> | undefined }>{
-    height: 150,
-    offsetTop: 25
-}
 
 export function resetStore() {
     for (const [key, value] of Object.entries(validateScore)) {
         value.currentLength = 0
         value.maxLength = 0
-    }
-    for (let [key, value] of Object.entries(dragAndDropState)) {
-        if (!key.includes('height') || key != 'offsetTop') {
-            value = undefined
-        }
     }
     if (Object.keys(foundation).length > 0) {
         for (let [key, value] of Object.entries(foundation)) {
@@ -90,8 +81,6 @@ export function resetStore() {
     })
     stockPile.length = 0
     wastePile.length = 0
-    mousePositon.x = undefined
-    mousePositon.y = undefined
     if (nonReactiveState.streakInterval) clearInterval(nonReactiveState.streakInterval)
     if (nonReactiveState.timeInterval) clearInterval(nonReactiveState.timeInterval)
     nonReactiveState.totalCards = 52

@@ -1,14 +1,14 @@
 import type { TFoundation } from '../types/Cards'
-import { tableau, wastePile, foundation, dragAndDropState } from '../store.svelte'
+import { tableau, wastePile, foundation } from '../store.svelte'
 
-export function dropIfTableauToTableau(parentIndex: number): void {
-    let currentCard = tableau[dragAndDropState.activeCardParentIndex!].faceUp.slice(dragAndDropState.activeCardIndex)
+export function dropIfTableauToTableau(parentIndex: number, activeCardParentIndex: number, activeCardIndex: number): void {
+    let currentCard = tableau[activeCardParentIndex!].faceUp.slice(activeCardIndex)
 
     tableau[parentIndex].faceUp = [
         ...tableau[parentIndex].faceUp,
         ...currentCard,
     ]
-    tableau[dragAndDropState.activeCardParentIndex!].faceUp.splice(dragAndDropState.activeCardIndex!)
+    tableau[activeCardParentIndex!].faceUp.splice(activeCardIndex!)
 }
 
 export function dropIfWastePileToTableau(parentIndex: number): void {
@@ -23,13 +23,13 @@ export function dropIfFoundationToTableau(key: keyof TFoundation, parentIndex: n
 
 }
 // set rules to drop card on tableau
-export function dropCardToTableauRules(foundationPileLength: number, lastChildElementColor: string, lastChildElementNumber: number): boolean {
+export function dropCardToTableauRules(foundationPileLength: number, lastChildElementColor: string, lastChildElementNumber: number, activeCardNumber: number, activeCardColor: string): boolean {
 
-    if (foundationPileLength < 2 && dragAndDropState.activeCardNumber === 13) {
+    if (foundationPileLength < 2 && activeCardNumber === 13) {
         return true
     } else if (
-        lastChildElementColor !== dragAndDropState.activeCardColor &&
-        dragAndDropState.activeCardNumber! + 1 === lastChildElementNumber
+        lastChildElementColor !== activeCardColor &&
+        activeCardNumber! + 1 === lastChildElementNumber
     ) {
         return true
     }
@@ -37,21 +37,21 @@ export function dropCardToTableauRules(foundationPileLength: number, lastChildEl
 }
 
 // check if condition is matched to drop card on foundation pile
-export const dropCardToFoundationPileRules = (foundationPileLength: number, lastChildElementType: string, lastChildElementNumber: number): boolean => {
+export const dropCardToFoundationPileRules = (foundationPileLength: number, lastChildElementType: string, lastChildElementNumber: number, activeCardNumber: number, activeCardType: string): boolean => {
 
-    if (foundationPileLength < 2 && dragAndDropState.activeCardNumber === 1) {
+    if (foundationPileLength < 2 && activeCardNumber === 1) {
         return true
     } else if (
-        lastChildElementType === dragAndDropState.activeCard &&
-        lastChildElementNumber + 1 === dragAndDropState.activeCardNumber
+        lastChildElementType === activeCardType &&
+        lastChildElementNumber + 1 === activeCardNumber
     ) {
         return true
     }
     return false
 }
 
-export const dropIfDraggedFromTableau = (key: keyof TFoundation): void => {
-    let currentCard = tableau[dragAndDropState.activeCardParentIndex!].faceUp.pop()!
+export const dropIfDraggedFromTableau = (key: keyof TFoundation, activeCardParentIndex: number): void => {
+    let currentCard = tableau[activeCardParentIndex!].faceUp.pop()!
     foundation[key] = [...foundation[key], currentCard]
 }
 export const dropIfDraggedFromWastePile = (key: keyof TFoundation) => {

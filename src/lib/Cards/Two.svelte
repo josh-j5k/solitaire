@@ -14,12 +14,12 @@
 <CardNumberTypeBottom {component} {class_props} card_number="2" />
 <div class="flex flex-col items-center justify-between h-full py-4 -lg:hidden">
 	<span class="w-6 aspect-square">
-		<Component {component} {class_props} />
+		<Component {component} />
 	</span>
 	<span class="w-6 aspect-square rotate-180">
-		<Component {component} {class_props} />
+		<Component {component} />
 	</span>
 </div>
-<span class="w-10 aspect-square absolute inset-0 mx-auto lg:hidden">
-	<Component {component} {class_props} />
+<span class="w-6 aspect-square absolute inset-0 m-auto lg:hidden">
+	<Component {component} />
 </span>

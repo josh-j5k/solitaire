@@ -1,15 +1,11 @@
 import { stockPile, time, nonReactiveState, store, resetStore } from '../store.svelte'
-import Spade from "../lib/icons/Spade.svelte"
-import Club from "../lib/icons/Club.svelte"
-import Diamond from "../lib/icons/Diamond.svelte"
-import Heart from "../lib/icons/Heart.svelte"
-import audio from './useAudio'
-import type { cardComponent, card, component } from '../types/Cards'
-import { shuffleAndArrangeCards, alignElements } from './useMoves'
+
+import { shuffleSound, clickSound } from '../utils/audio'
+import type { component } from '../types/Cards'
+import { shuffleAndArrangeCards } from './useMoves'
 import { streaking } from './useScore'
 
 
-const { shuffleSound, clickSound } = audio()
 const arr = ["Ace", "King", "Queen", "Nine", "Jack", "Ten", "Eight", "Seven", "Five", "Six", "Three", "Four", "Two",]
 
 let components = ['Spade', "Diamond", "Heart", "Club"] as component[]
@@ -84,19 +80,12 @@ export function startGame() {
     setStockPile()
     shuffleAndArrangeCards()
 
-
-    let startGameTimeout = setTimeout(() => {
+    setTimeout(() => {
         store.loader = false
         shuffleSound.play()
+        setTimer()
         setTimeout(() => {
-            const containingBlock = document.querySelectorAll(".containing_block")
-            containingBlock.forEach((ele) => {
-                const block = ele as HTMLDivElement
-                alignElements(block)
-            })
             playStartAnimationAndAlignCards()
-            clearTimeout(startGameTimeout)
-            setTimer()
 
         }, 10);
     }, 1000)

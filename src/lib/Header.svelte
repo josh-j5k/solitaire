@@ -27,7 +27,7 @@
 					clickSound.play()
 					store.menuToggled = true
 				}}
-				class="w-8 aspect-square flex justify-center items-center bg-[#00000083] transition-opacity {store.menuToggled
+				class="w-6 aspect-square flex justify-center items-center transition-opacity {store.menuToggled
 					? 'opacity-0'
 					: 'opacity-100'}"
 			>

@@ -1,9 +1,8 @@
 <script lang="ts">
 	import Placeholder from "./lib/Placeholder.svelte"
-	import audio from "./hooks/useAudio"
 	import { setCardNameAndNumberAtrribute } from "./helpers/SetCardNameAndNumberAtrribute"
 	import CardFaceDown from "./lib/CardFaceDown.svelte"
-	import { useDimensionDesign } from "./helpers/DimensionDesigns"
+	import { design, dimensions } from "./utils/dimensionsAndDesign"
 	import Loader from "./lib/Loader.svelte"
 	import {
 		stockPile,
@@ -13,23 +12,19 @@
 		tableau,
 	} from "./store.svelte"
 	import { revealAndRedealStockpile } from "./hooks/useMoves"
-	import ondrag from "./utils/drag"
-	import dragEnd from "./utils/dragEnd"
-	import dragStart from "./utils/dragStart"
-	import drop from "./utils/drop"
 	import Header from "./lib/Header.svelte"
 	import Menu from "./lib/Menu.svelte"
 	import Welcome from "./lib/Welcome.svelte"
 	import Success from "./lib/Success.svelte"
 	import { onMount } from "svelte"
-	import touchStart from "./utils/touchStart"
-	import touchMove from "./utils/touchMove"
-	import touchEnd from "./utils/touchEnd"
+	import { clickSound } from "./utils/audio"
+	import { useDragAndDrop } from "./hooks/useDragAndDrop.svelte"
+	import type { TFoundation } from "./types/Cards"
+	import { useTouch } from "./hooks/useTouch.svelte"
 
 	const { cardNumber, cardType, cardColor } = setCardNameAndNumberAtrribute()
-	const { design, dimensions } = useDimensionDesign()
-	const { clickSound, shuffleSound } = audio()
-
+	const { ondrag, ondragend, ondragstart, ondrop } = useDragAndDrop()
+	const { touch } = useTouch()
 	function keyBoardReveal(ev: KeyboardEvent) {}
 	function dragOver(e: DragEvent) {
 		e.preventDefault()
@@ -37,19 +32,25 @@
 			e.dataTransfer.dropEffect = "move"
 		}
 	}
-	function draggableOne(item: any[]): boolean {
-		if (item.length === 1) {
-			return true
+
+	onMount(() => {
+		if (innerWidth < 990) {
+			store.offsetTop = 15
+			store.height = 100
 		}
-		return false
-	}
-	function draggableTwo(item: any[]): boolean {
-		if (item.length === 2) {
-			return true
+
+		if (
+			navigator.userAgent.includes("iPhone") ||
+			navigator.userAgent.includes("Android")
+		) {
+			store.isMobile = true
 		}
-		return false
-	}
-	onMount(() => {})
+
+		document.documentElement.style.setProperty(
+			"--offset-top",
+			store.offsetTop.toString() + "px"
+		)
+	})
 </script>
 
 <main id="main" ondragover={dragOver} role="application">
@@ -68,8 +69,9 @@
 				<!-- Hamburger Menu -->
 				<Menu {clickSound} />
 				<!-- Main Area -->
+
 				<div
-					class="w-4/5 mx-auto h-screen absolute inset-0 pt-12 -z-10 -lg:overflow-hidden grid gap-4 lg:gap-y-8 grid-cols-7 grid-rows-[150px_auto]"
+					class="w-4/5 mx-auto h-screen absolute inset-0 pt-12 -z-10 -lg:overflow-hidden grid gap-4 lg:gap-y-8 grid-cols-7 grid-rows-[150px_auto] -lg:grid-rows-[105px_auto]"
 				>
 					<!-- Stockpile -->
 					<div class="relative h-[140px] col-start-1 col-end-2 row-auto">
@@ -133,571 +135,140 @@
 						class="relative col-start-2 col-end-3 h-[140px] row-auto"
 					>
 						{#each wastePile as card, index}
-							{#if wastePile.length <= 3}
-								{#if index === 0}
-									<div
-										data-waste-pile="true"
-										data-card-rank={cardNumber(card.card)}
-										data-card-type={cardType(card.component)}
-										data-card-color={cardColor(card.component)}
-										draggable={draggableOne(wastePile)}
-										role="application"
-										ondragstart={dragStart}
-										{ondrag}
-										ondragend={dragEnd}
-										ontouchstart={touchStart}
-										ontouchmove={touchMove}
-										ontouchend={touchEnd}
-										class=" {dimensions} {design} dragged top-0 stack_face_up {index ===
-										wastePile.length - 1
-											? 'hide-card'
-											: ''}"
-									>
-										<Placeholder {card} />
-									</div>
-								{/if}
-								{#if index === 1}
-									<div
-										data-waste-pile="true"
-										data-card-rank={cardNumber(card.card)}
-										data-card-type={cardType(card.component)}
-										data-card-color={cardColor(card.component)}
-										draggable={draggableTwo(wastePile)}
-										role="application"
-										ondragstart={dragStart}
-										{ondrag}
-										ondragend={dragEnd}
-										class=" {dimensions} {design} dragged top-0 left-6 stack_face_up {index ===
-										wastePile.length - 1
-											? 'hide-card'
-											: ''}"
-									>
-										<Placeholder {card} />
-									</div>
-								{/if}
-								{#if index === 2}
-									<div
-										data-waste-pile="true"
-										data-card-rank={cardNumber(card.card)}
-										data-card-type={cardType(card.component)}
-										data-card-color={cardColor(card.component)}
-										draggable="true"
-										role="application"
-										ondragstart={dragStart}
-										{ondrag}
-										ondragend={dragEnd}
-										class=" {dimensions} {design} dragged top-0 left-12 stack_face_up {index ===
-										wastePile.length - 1
-											? 'hide-card'
-											: ''}"
-									>
-										<Placeholder {card} />
-									</div>
-								{/if}
-							{:else}
-								{#if index === wastePile.length - 3}
-									<div
-										data-waste-pile="true"
-										data-card-rank={cardNumber(card.card)}
-										data-card-type={cardType(card.component)}
-										data-card-color={cardColor(card.component)}
-										draggable={draggableOne(wastePile)}
-										role="application"
-										ondragstart={dragStart}
-										{ondrag}
-										ondragend={dragEnd}
-										class=" {dimensions} {design} dragged top-0 stack_face_up"
-									>
-										<Placeholder {card} />
-									</div>
-								{/if}
-								{#if index === wastePile.length - 2}
-									<div
-										data-waste-pile="true"
-										data-card-rank={cardNumber(card.card)}
-										data-card-type={cardType(card.component)}
-										data-card-color={cardColor(card.component)}
-										draggable={draggableTwo(wastePile)}
-										role="application"
-										ondragstart={dragStart}
-										{ondrag}
-										ondragend={dragEnd}
-										class=" {dimensions} {design} dragged top-0 left-6 stack_face_up"
-									>
-										<Placeholder {card} />
-									</div>
-								{/if}
-								{#if index === wastePile.length - 1}
-									<div
-										data-waste-pile="true"
-										data-card-rank={cardNumber(card.card)}
-										data-card-type={cardType(card.component)}
-										data-card-color={cardColor(card.component)}
-										draggable="true"
-										role="application"
-										ondragstart={dragStart}
-										{ondrag}
-										ondragend={dragEnd}
-										class=" {dimensions} {design} dragged top-0 left-12 stack_face_up {index ===
-										wastePile.length - 1
-											? 'hide-card'
-											: ''}"
-									>
-										<Placeholder {card} />
-									</div>
-								{/if}
-							{/if}
+							<div
+								data-waste-pile="true"
+								data-card-rank={cardNumber(card.card)}
+								data-card-type={cardType(card.component)}
+								data-card-color={cardColor(card.component)}
+								draggable={index === wastePile.length - 1}
+								role="button"
+								tabindex="0"
+								onkeydown={keyBoardReveal}
+								onclick={touch}
+								{ondragstart}
+								{ondrag}
+								{ondragend}
+								class="{dimensions} {design} absolute top-0 {wastePile.length <=
+								3
+									? `left-${index * 6}`
+									: wastePile.length > 3 && index < wastePile.length - 3
+										? 'hidden'
+										: `left-${(index + 3 - wastePile.length) * 6}`} stack_face_up {index ===
+								wastePile.length - 1
+									? 'reveal-card'
+									: ''}"
+							>
+								<Placeholder {card} />
+							</div>
 						{/each}
 					</div>
 					<!-- foundation -->
-					<div
-						data-foundation="0"
-						class="relative {dimensions} col-start-4 col-end-5 row-auto border-2 rounded-xl border-gray-100"
-					>
+					{#each Array(4) as _, index}
 						<div
-							ondragover={dragOver}
-							role="application"
-							ondrop={drop}
-							class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
+							data-foundation={index}
+							class="relative {dimensions} col-start-{index +
+								4} col-end-{index +
+								5} row-auto border-2 rounded-xl border-gray-100"
 						>
-						</div>
+							<div
+								ondragover={dragOver}
+								role="application"
+								{ondrop}
+								class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
+							>
+							</div>
 
-						{#each foundation[0] as card, index}
-							{#if index === foundation[0].length - 2}
-								<div
-									data-card-rank={cardNumber(card.card)}
-									data-card-type={cardType(card.component)}
-									data-card-color={cardColor(card.component)}
-									draggable="true"
-									role="application"
-									ondragstart={dragStart}
-									{ondrag}
-									ondragend={dragEnd}
-									class=" {dimensions} {design} dragged top-0 left-0"
-								>
-									<Placeholder {card} />
-								</div>
-							{/if}
-							{#if index === foundation[0].length - 1}
-								<div
-									data-card-rank={cardNumber(card.card)}
-									data-card-type={cardType(card.component)}
-									data-card-color={cardColor(card.component)}
-									draggable="true"
-									role="application"
-									ondragstart={dragStart}
-									{ondrag}
-									ondragend={dragEnd}
-									class=" {dimensions} {design} dragged top-0 left-0"
-								>
-									<Placeholder {card} />
-								</div>
-							{/if}
-						{/each}
-					</div>
-					<div
-						data-foundation="1"
-						class="relative {dimensions} col-start-5 col-end-6 row-auto border-2 rounded-xl border-gray-100"
-					>
-						<div
-							ondragover={dragOver}
-							role="application"
-							ondrop={drop}
-							class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
-						>
+							{#each foundation[index as keyof TFoundation] as card, i}
+								{#if i === foundation[index as keyof TFoundation].length - 2}
+									<div
+										data-card-rank={cardNumber(card.card)}
+										data-card-type={cardType(card.component)}
+										data-card-color={cardColor(card.component)}
+										draggable="true"
+										role="button"
+										tabindex="0"
+										onkeydown={keyBoardReveal}
+										onclick={touch}
+										{ondragstart}
+										{ondrag}
+										{ondragend}
+										class=" {dimensions} {design} absolute top-0 left-0"
+									>
+										<Placeholder {card} />
+									</div>
+								{/if}
+								{#if i === foundation[index as keyof TFoundation].length - 1}
+									<div
+										data-card-rank={cardNumber(card.card)}
+										data-card-type={cardType(card.component)}
+										data-card-color={cardColor(card.component)}
+										draggable="true"
+										role="button"
+										tabindex="0"
+										onkeydown={keyBoardReveal}
+										onclick={touch}
+										{ondragstart}
+										{ondrag}
+										{ondragend}
+										class=" {dimensions} {design} absolute top-0 left-0"
+									>
+										<Placeholder {card} />
+									</div>
+								{/if}
+							{/each}
 						</div>
-						{#each foundation[1] as card, index}
-							{#if index === foundation[1].length - 2}
-								<div
-									data-card-rank={cardNumber(card.card)}
-									data-card-type={cardType(card.component)}
-									data-card-color={cardColor(card.component)}
-									draggable="true"
-									role="application"
-									ondragstart={dragStart}
-									{ondrag}
-									ondragend={dragEnd}
-									class=" {dimensions} {design} dragged top-0 left-0"
-								>
-									<Placeholder {card} />
-								</div>
-							{/if}
-							{#if index === foundation[1].length - 1}
-								<div
-									data-card-rank={cardNumber(card.card)}
-									data-card-type={cardType(card.component)}
-									data-card-color={cardColor(card.component)}
-									draggable="true"
-									role="application"
-									ondragstart={dragStart}
-									{ondrag}
-									ondragend={dragEnd}
-									class=" {dimensions} {design} dragged top-0 left-0"
-								>
-									<Placeholder {card} />
-								</div>
-							{/if}
-						{/each}
-					</div>
-					<div
-						data-foundation="2"
-						class="relative {dimensions} col-start-6 col-end-7 row-auto border-2 rounded-xl border-gray-100"
-					>
-						<div
-							ondragover={dragOver}
-							role="application"
-							ondrop={drop}
-							class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
-						>
-						</div>
-						{#each foundation[2] as card, index}
-							{#if index === foundation[2].length - 2}
-								<div
-									data-card-rank={cardNumber(card.card)}
-									data-card-type={cardType(card.component)}
-									data-card-color={cardColor(card.component)}
-									data-index={index}
-									draggable="true"
-									role="application"
-									ondragstart={dragStart}
-									{ondrag}
-									ondragend={dragEnd}
-									class=" {dimensions} {design} dragged top-0 left-0"
-								>
-									<Placeholder {card} />
-								</div>
-							{/if}
-							{#if index === foundation[2].length - 1}
-								<div
-									data-card-rank={cardNumber(card.card)}
-									data-card-type={cardType(card.component)}
-									data-card-color={cardColor(card.component)}
-									data-index={index}
-									draggable="true"
-									role="application"
-									ondragstart={dragStart}
-									{ondrag}
-									ondragend={dragEnd}
-									class=" {dimensions} {design} dragged top-0 left-0"
-								>
-									<Placeholder {card} />
-								</div>
-							{/if}
-						{/each}
-					</div>
-					<div
-						data-foundation="3"
-						class="relative {dimensions} col-start-7 col-end-8 row-auto border-2 rounded-xl border-gray-100"
-					>
-						<div
-							ondragover={dragOver}
-							role="application"
-							ondrop={drop}
-							class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
-						>
-						</div>
-						{#each foundation[3] as card, index}
-							{#if index === foundation[3].length - 2}
-								<div
-									data-card-rank={cardNumber(card.card)}
-									data-card-type={cardType(card.component)}
-									data-card-color={cardColor(card.component)}
-									data-index={index}
-									draggable="true"
-									role="application"
-									ondragstart={dragStart}
-									{ondrag}
-									ondragend={dragEnd}
-									class=" {dimensions} {design} dragged top-0 left-0"
-								>
-									<Placeholder {card} />
-								</div>
-							{/if}
-							{#if index === foundation[3].length - 1}
-								<div
-									data-card-rank={cardNumber(card.card)}
-									data-card-type={cardType(card.component)}
-									data-card-color={cardColor(card.component)}
-									data-index={index}
-									draggable="true"
-									role="application"
-									ondragstart={dragStart}
-									{ondrag}
-									ondragend={dragEnd}
-									class=" {dimensions} {design} dragged top-0 left-0"
-								>
-									<Placeholder {card} />
-								</div>
-							{/if}
-						{/each}
-					</div>
+					{/each}
+
 					<!-- Tableau -->
-					<div
-						data-tableau="0"
-						class="relative col-start-1 containing_block row-start-2 row-end-3"
-						><div
-							ondragover={dragOver}
-							role="application"
-							ondrop={drop}
-							class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
-						>
-						</div>
-						{#each tableau[0].faceUp as card, index}
-							<div
-								data-card-rank={cardNumber(card.card)}
-								data-card-type={cardType(card.component)}
-								data-card-color={cardColor(card.component)}
-								data-index={index}
-								draggable="true"
-								role="application"
-								ondragstart={dragStart}
-								{ondrag}
-								ondragend={dragEnd}
-								class=" {dimensions} {design} {store.gameLoadingAnimation
-									? '-translate-y-36'
-									: ''}"
-							>
-								<Placeholder {card} />
-							</div>
-						{/each}
-					</div>
-					<div
-						data-tableau="1"
-						class="relative col-start-2 row-start-2 containing_block"
-					>
+					{#each Array(7) as _, index}
 						<div
-							ondragover={dragOver}
-							role="application"
-							ondrop={drop}
-							class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
-						>
+							data-tableau={index}
+							class="relative col-start-{index +
+								1} containing_block row-start-2 row-end-3"
+							><div
+								ondragover={dragOver}
+								role="application"
+								{ondrop}
+								class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
+							>
+							</div>
+							{#if index > 0}
+								{#each tableau[index].faceDown as _}
+									<div
+										class="absolute {dimensions} cursor-default {store.gameLoadingAnimation
+											? '-translate-y-36 -translate-x-24 opacity-0'
+											: ''}"
+									>
+										<CardFaceDown />
+									</div>
+								{/each}
+							{/if}
+							{#each tableau[index].faceUp as card, i}
+								<div
+									data-card-rank={cardNumber(card.card)}
+									data-card-type={cardType(card.component)}
+									data-card-color={cardColor(card.component)}
+									data-index={i}
+									draggable="true"
+									role="button"
+									tabindex="0"
+									onkeydown={keyBoardReveal}
+									onclick={touch}
+									{ondragstart}
+									{ondrag}
+									{ondragend}
+									class="absolute {dimensions} {design} {store.gameLoadingAnimation &&
+									index == 0
+										? '-translate-y-36'
+										: store.gameLoadingAnimation && index > 0
+											? '-translate-y-36 -translate-x-24 opacity-0'
+											: ''}"
+								>
+									<Placeholder {card} />
+								</div>
+							{/each}
 						</div>
-						{#each tableau[1].faceDown as _, index}
-							<div
-								class=" {dimensions} cursor-default {store.gameLoadingAnimation
-									? '-translate-y-36 -translate-x-24 opacity-0'
-									: ''}"
-							>
-								<CardFaceDown />
-							</div>
-						{/each}
-						{#each tableau[1].faceUp as card, index}
-							<div
-								data-card-rank={cardNumber(card.card)}
-								data-card-type={cardType(card.component)}
-								data-card-color={cardColor(card.component)}
-								data-index={index}
-								draggable="true"
-								role="application"
-								ondragstart={dragStart}
-								{ondrag}
-								ondragend={dragEnd}
-								class=" {dimensions} {design} {store.gameLoadingAnimation
-									? '-translate-y-36 -translate-x-24 opacity-0'
-									: ''} "
-							>
-								<Placeholder {card} />
-							</div>
-						{/each}
-					</div>
-					<div
-						data-tableau="2"
-						class="relative col-start-3 row-start-2 containing_block"
-					>
-						<div
-							ondragover={dragOver}
-							role="application"
-							ondrop={drop}
-							class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
-						>
-						</div>
-						{#each tableau[2].faceDown as _, index}
-							<div
-								id={"_two" + index}
-								class=" {dimensions} {store.gameLoadingAnimation
-									? '-translate-y-36 -translate-x-24 opacity-0'
-									: ''} cursor-default"
-							>
-								<CardFaceDown />
-							</div>
-						{/each}
-						{#each tableau[2].faceUp as card, index}
-							<div
-								data-card-rank={cardNumber(card.card)}
-								data-card-type={cardType(card.component)}
-								data-card-color={cardColor(card.component)}
-								data-index={index}
-								draggable="true"
-								role="application"
-								ondragstart={dragStart}
-								{ondrag}
-								ondragend={dragEnd}
-								class=" {dimensions} {design} {store.gameLoadingAnimation
-									? '-translate-y-36 -translate-x-24 opacity-0'
-									: ''}"
-							>
-								<Placeholder {card} />
-							</div>
-						{/each}
-					</div>
-					<div
-						data-tableau="3"
-						class="relative col-start-4 row-start-2 containing_block"
-					>
-						<div
-							ondragover={dragOver}
-							role="application"
-							ondrop={drop}
-							class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
-						>
-						</div>
-						{#each tableau[3].faceDown as _, index}
-							<div
-								id={"_three" + index}
-								class=" {dimensions} {store.gameLoadingAnimation &&
-									'-translate-y-36 -translate-x-24 opacity-0'} cursor-default"
-							>
-								<CardFaceDown />
-							</div>
-						{/each}
-						{#each tableau[3].faceUp as card, index}
-							<div
-								data-card-rank={cardNumber(card.card)}
-								data-card-type={cardType(card.component)}
-								data-card-color={cardColor(card.component)}
-								data-index={index}
-								draggable="true"
-								role="application"
-								ondragstart={dragStart}
-								{ondrag}
-								ondragend={dragEnd}
-								class=" {dimensions} {design} {store.gameLoadingAnimation
-									? '-translate-y-36 -translate-x-24 opacity-0'
-									: ''}"
-							>
-								<Placeholder {card} />
-							</div>
-						{/each}
-					</div>
-					<div
-						data-tableau="4"
-						class="relative col-start-5 row-start-2 containing_block"
-					>
-						<div
-							ondragover={dragOver}
-							role="application"
-							ondrop={drop}
-							class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
-						>
-						</div>
-						{#each tableau[4].faceDown as _, index}
-							<div
-								id={"_four" + index}
-								class=" {dimensions} {store.gameLoadingAnimation
-									? '-translate-y-36 -translate-x-24 opacity-0'
-									: ''} cursor-default"
-							>
-								<CardFaceDown />
-							</div>
-						{/each}
-						{#each tableau[4].faceUp as card, index}
-							<div
-								data-card-rank={cardNumber(card.card)}
-								data-card-type={cardType(card.component)}
-								data-card-color={cardColor(card.component)}
-								data-index={index}
-								draggable="true"
-								role="application"
-								ondragstart={dragStart}
-								{ondrag}
-								ondragend={dragEnd}
-								class=" {dimensions} {design} {store.gameLoadingAnimation
-									? '-translate-y-36 -translate-x-24 opacity-0'
-									: ''}"
-							>
-								<Placeholder {card} />
-							</div>
-						{/each}
-					</div>
-					<div
-						data-tableau="5"
-						class="relative col-start-6 row-start-2 containing_block"
-					>
-						<div
-							ondragover={dragOver}
-							role="application"
-							ondrop={drop}
-							class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
-						></div>
-						{#each tableau[5].faceDown as _, index}
-							<div
-								id={"_five" + index}
-								class=" {dimensions} {store.gameLoadingAnimation
-									? '-translate-y-36 -translate-x-24 opacity-0'
-									: ''} cursor-default"
-							>
-								<CardFaceDown />
-							</div>
-						{/each}
-						{#each tableau[5].faceUp as card, index}
-							<div
-								data-card-rank={cardNumber(card.card)}
-								data-card-type={cardType(card.component)}
-								data-card-color={cardColor(card.component)}
-								data-index={index}
-								draggable="true"
-								role="application"
-								ondragstart={dragStart}
-								{ondrag}
-								ondragend={dragEnd}
-								class=" {dimensions} {design} {store.gameLoadingAnimation
-									? '-translate-y-36 -translate-x-24 opacity-0'
-									: ''}"
-							>
-								<Placeholder {card} />
-							</div>
-						{/each}
-					</div>
-					<div
-						data-tableau="6"
-						class="relative col-start-7 row-start-2 containing_block"
-					>
-						<div
-							ondragover={dragOver}
-							role="application"
-							ondrop={drop}
-							class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
-						>
-						</div>
-						{#each tableau[6].faceDown as _, index}
-							<div
-								id={"_six" + index}
-								class=" {dimensions} {store.gameLoadingAnimation
-									? '-translate-y-36 -translate-x-24 opacity-0'
-									: ''} cursor-default"
-							>
-								<CardFaceDown />
-							</div>
-						{/each}
-						{#each tableau[6].faceUp as card, index}
-							<div
-								data-card-rank={cardNumber(card.card)}
-								data-card-type={cardType(card.component)}
-								data-card-color={cardColor(card.component)}
-								data-index={index}
-								draggable="true"
-								role="application"
-								ondragstart={dragStart}
-								{ondrag}
-								ondragend={dragEnd}
-								class=" {dimensions} {design} {store.gameLoadingAnimation
-									? '-translate-y-36 -translate-x-24 opacity-0'
-									: ''}"
-							>
-								<Placeholder {card} />
-							</div>
-						{/each}
-					</div>
+					{/each}
 				</div>
 			</section>
 		{:else}
@@ -742,7 +313,7 @@
 		animation: flip-card 700ms ease forwards;
 	}
 	.reveal-card {
-		animation: reveal-card 50ms ease-in-out forwards;
+		animation: reveal-card 50ms ease-in-out;
 	}
 	.hide-card {
 		transform: translateX(-100px);
@@ -776,6 +347,10 @@
 		width: 100%;
 	}
 	@keyframes reveal-card {
+		from {
+			transform: translateX(-100px);
+			opacity: 50;
+		}
 		to {
 			transform: translateX(0);
 			opacity: 100;
@@ -823,5 +398,56 @@
 		to {
 			transform: rotateY(0);
 		}
+	}
+	.containing_block > div:nth-child(2) {
+		top: 0;
+	}
+	.containing_block > div:nth-child(3) {
+		top: calc(var(--offset-top) * 1);
+	}
+	.containing_block > div:nth-child(4) {
+		top: calc(var(--offset-top) * 2);
+	}
+	.containing_block > div:nth-child(4) {
+		top: calc(var(--offset-top) * 2);
+	}
+	.containing_block > div:nth-child(5) {
+		top: calc(var(--offset-top) * 3);
+	}
+	.containing_block > div:nth-child(6) {
+		top: calc(var(--offset-top) * 4);
+	}
+	.containing_block > div:nth-child(7) {
+		top: calc(var(--offset-top) * 5);
+	}
+	.containing_block > div:nth-child(8) {
+		top: calc(var(--offset-top) * 6);
+	}
+	.containing_block > div:nth-child(9) {
+		top: calc(var(--offset-top) * 7);
+	}
+	.containing_block > div:nth-child(10) {
+		top: calc(var(--offset-top) * 8);
+	}
+	.containing_block > div:nth-child(11) {
+		top: calc(var(--offset-top) * 9);
+	}
+	.containing_block > div:nth-child(12) {
+		top: calc(var(--offset-top) * 10);
+	}
+	.containing_block > div:nth-child(13) {
+		top: calc(var(--offset-top) * 11);
+	}
+	.containing_block > div:nth-child(14) {
+		top: calc(var(--offset-top) * 12);
+	}
+	.containing_block > div:nth-child(15) {
+		top: calc(var(--offset-top) * 13);
+	}
+	.containing_block > div:nth-child(16) {
+		top: calc(var(--offset-top) * 14);
+	}
+	.containing_block > div:nth-child(17) {
+		top: calc(var(--offset-top) * 15);
 	}
 </style>
