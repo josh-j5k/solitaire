@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { store } from "../store.svelte"
+	import { pauseAndPlayGame } from "../hooks/usePlayGame"
 
 	let current = $state<string>("basic")
 </script>
@@ -12,6 +13,7 @@
 			aria-label="closeMenu"
 			onclick={() => {
 				store.howToPlay = false
+				pauseAndPlayGame()
 			}}
 			class="absolute top-1 right-4 z-50"
 		>
@@ -64,6 +66,16 @@
 		>
 			<button onclick={() => (current = "scoring")} class="flex-1">
 				Scoring
+			</button>
+		</div>
+		<div
+			class="flex-1 p-4 relative before:content-[''] before:absolute before:w-full before:h-2 before:left-0 before:bottom-0 hover:before:bg-blue-500 {current ==
+			'controls'
+				? 'before:bg-blue-500'
+				: ''}"
+		>
+			<button onclick={() => (current = "controls")} class="flex-1">
+				Controls
 			</button>
 		</div>
 	</div>
@@ -153,7 +165,7 @@
 					/>
 				</div>
 			</div>
-		{:else}
+		{:else if current == "scoring"}
 			<div class="max-w-3xl mx-auto border-b border-white py-8">
 				<h2 class="text-2xl font-bold pb-6">Scoring</h2>
 				<div class="">
@@ -179,6 +191,25 @@
 						</p>
 					</div>
 				</div>
+			</div>
+		{:else}
+			<div class="max-w-3xl mx-auto border-b border-white py-8">
+				{#if !store.isMobile}
+					<h2 class="text-2xl font-bold pb-6">Drag and Drop</h2>
+					<div class="">
+						<p class="text-xl mb-6"
+							>You move cards around by performing a drag and drop action
+						</p>
+					</div>
+				{:else}
+					<h2 class="text-2xl font-bold pb-6">Touch</h2>
+					<div class="">
+						<p class="text-xl mb-6"
+							>You move cards around by tapping on the desired card you want to
+							move around, then tap on the on the desired location
+						</p>
+					</div>
+				{/if}
 			</div>
 		{/if}
 	</div>

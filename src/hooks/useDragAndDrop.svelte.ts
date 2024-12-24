@@ -156,18 +156,15 @@ export function useDragAndDrop() {
                     setScore(true)
                 }
 
-                // setTimeout(() => {
-                //     parent.classList.remove("valid-move")
-                // }, 800)
+
 
             }
         } else if (
             dataTableau &&
-            activeCardElement!.parentElement?.hasAttribute("data-foundation")
+            activeCardElement!.parentElement?.hasAttribute("data-foundation") && dropCardToTableauRules(parent?.children.length!, lastChildElementColor, lastChildElementNumber, activeCardNumber!, activeCardColor!)
         ) {
             const key = dragKey()
             dropIfFoundationToTableau(key, parentIndex)
-
             dropSound.play()
             validateScore[key].currentLength -= 1
 
@@ -199,10 +196,7 @@ export function useDragAndDrop() {
                 setScore(true)
 
             }
-            // dropTimeout = setTimeout(() => {
-            //     parent.classList.remove("valid-move")
-            //     clearTimeout(dropTimeout)
-            // }, 800)
+
             flipCard(activeCardParentIndex!)
         } else if (
             dataFoundation &&
@@ -215,12 +209,8 @@ export function useDragAndDrop() {
             foundation[key] = [...foundation[key], currentCard]
             parent.classList.add("valid-move")
             successAudio.play()
-            // dropTimeout = setTimeout(() => {
-            //     parent.classList.remove("valid-move")
-            //     clearTimeout(dropTimeout)
-            // }, 800)
-        }
 
+        }
         showWinnigScreen()
         resetZIndex()
     }

@@ -23,6 +23,8 @@
 	import { useTouch } from "./hooks/useTouch.svelte"
 	import HowToPlay from "./lib/HowToPlay.svelte"
 	import ScreenOrientationPopup from "./lib/ScreenOrientationPopup.svelte"
+	import Spinner from "./lib/Spinner.svelte"
+	import Leaderboard from "./lib/Leaderboard.svelte"
 
 	const { cardNumber, cardType, cardColor } = setCardNameAndNumberAtrribute()
 	const { ondrag, ondragend, ondragstart, ondrop } = useDragAndDrop()
@@ -36,6 +38,8 @@
 	}
 
 	onMount(() => {
+		const difficulty = localStorage.getItem("difficulty")
+		if (difficulty) store.difficulty = difficulty
 		if (innerWidth < 990) {
 			store.offsetTop = 10
 			store.height = 100
@@ -303,6 +307,9 @@
 	{/if}
 	{#if store.popup}
 		<ScreenOrientationPopup />
+	{/if}
+	{#if store.leaderboard}
+		<Leaderboard />
 	{/if}
 </main>
 

@@ -3,7 +3,7 @@
 </script>
 
 <div
-	class="absolute top-0 max-w-xl mx-auto left-0 right-0 py-4 flex flex-col items-center gap-3 bg-black/95"
+	class="absolute top-0 max-w-xl mx-auto left-0 right-0 z-[9999] py-4 flex flex-col items-center gap-3 bg-black/95"
 >
 	<button
 		aria-label="closeMenu"

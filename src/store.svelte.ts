@@ -21,6 +21,8 @@ export const store = $state({
     howToPlay: false,
     leaderboard: false,
     popup: false,
+    spinerState: false,
+    leaderboardData: <Array<{ name: string, score: number, time: string }>>[]
 
 })
 export let nonReactiveState = <{ totalCards: number, streakInterval: number | undefined, timeInterval: number | undefined }>{

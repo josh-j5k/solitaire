@@ -13,13 +13,29 @@
 	function changeDifficulty(e: string) {
 		clickSound.load()
 		clickSound.play()
+		localStorage.setItem("difficulty", e)
 		if (store.difficulty !== e) {
 			store.difficulty = e
 			startGame()
 		}
 	}
-	function leaderboard() {}
+	async function leaderboard() {
+		store.leaderboard = true
+		store.menuToggled = false
+		store.spinerState = true
+		pauseAndPlayGame()
+		const response = await fetch(
+			import.meta.env.VITE_API_URL + "/api/solitaire/leaderboard"
+		)
+
+		if (response.ok) {
+			const data = await response.json()
+			store.leaderboardData = data.data
+			store.spinerState = false
+		}
+	}
 	function help() {
+		pauseAndPlayGame()
 		store.howToPlay = true
 		store.menuToggled = false
 	}
