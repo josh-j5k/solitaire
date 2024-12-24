@@ -7,69 +7,91 @@ import { flipCard } from "./useMoves";
 import { setScore, showWinnigScreen } from "./useScore";
 
 
-export function useTouch() {
-    let top = $state<string>()
-    let activeCardIndex = $state<number>()
-    let isDraggedFromWastePile = $state<boolean>()
-    let activeCardParentIndex = $state<number>()
-    let activeCardType = $state<string>()
-    let activeCardNumber = $state<number>()
-    let activeCardColor = $state<string>()
-    let activeCardElement = $state<HTMLDivElement>()
+export function useTouch(): { touch: (e: MouseEvent) => void } {
+
+    let top = undefined
+    let activeCardIndex = <number | undefined>undefined
+    let isDraggedFromWastePile = false
+    let activeCardParentIndex = undefined
+    let activeCardType = undefined
+    let activeCardNumber = undefined
+    let activeCardColor = undefined
+    let activeCardElement = undefined
     let dataTableau = false
+    let nodeList = undefined
+    let drop = false
 
-    function touch(e: MouseEvent) {
-
+    function touch(e: MouseEvent): void {
         if (!store.isMobile) {
             return
         }
-
-
         const dragoverZone = document.querySelectorAll(".dragover_zone")
         const element = e.currentTarget as HTMLDivElement
-        const nodeList = element.parentElement!.querySelectorAll("div[data-index]")
-        if (document.documentElement.dataset.dataDragging === "true") {
-            validateMove(element)
-            document.documentElement.dataset.dataDragging = "false"
-            dragoverZone.forEach((zone) => {
-                if (zone.classList.contains('show')) {
-                    zone.classList.remove("show")
-                }
-            })
-            for (let index = 0; index < nodeList!.length; index++) {
-                const element = nodeList![index] as HTMLDivElement
-                if (index >= activeCardIndex!) {
-                    if (element.classList.contains("dragging")) {
-                        element.classList.remove("dragging")
-                    }
-                    if (dataTableau) {
-                        element.style.top = store.offsetTop.toString() + 'px'
-                        element.style.transform = 'translateY(0)'
-                    }
 
+        if (document.documentElement.dataset.dragging === "true") {
+            validateMove(element)
+            document.documentElement.dataset.dragging = "false"
+            if (!drop) {
+                dragoverZone.forEach((zone) => {
+                    if (zone.classList.contains("show")) zone.classList.remove("show")
+                })
+                if (activeCardIndex) {
+                    for (let index = 0; index < nodeList!.length; index++) {
+                        const element = nodeList![index] as HTMLDivElement
+                        if (index >= activeCardIndex!) {
+                            if (element.classList.contains("dragging")) {
+                                element.classList.remove("dragging")
+                            }
+                            if (dataTableau) {
+                                element.style.top = top!
+                                element.style.transform = 'translateY(0)'
+                            }
+
+                        }
+                    }
+                } else {
+                    activeCardElement!.classList.remove("dragging")
                 }
+                dragEndSound.play()
+                activeCardIndex = undefined
             }
+            drop = false
             return
         }
+        document.documentElement.dataset.dragging = "true"
+        nodeList = element.parentElement!.querySelectorAll("div[data-index]")
         setElement(element)
 
         dragoverZone.forEach((zone) => {
             zone.classList.add("show")
         })
-        for (let index = 0; index < nodeList!.length; index++) {
-            const element = nodeList![index] as HTMLDivElement
-            if (index >= activeCardIndex!) {
-                element.classList.add("dragging")
-                if (dataTableau) {
-                    element.style.top = '30px'
-                    element.style.transform = 'translateY(-100px)'
-                }
 
+        dragStartSound.play()
+        if (activeCardIndex != undefined) {
+
+            let spacing = nodeList!.length - 1 - activeCardIndex
+            let trans = spacing * 15
+            for (let index = 0; index < nodeList!.length; index++) {
+                const element = nodeList![index] as HTMLDivElement
+                if (index >= activeCardIndex!) {
+                    element.classList.add("dragging")
+                    if (dataTableau) {
+                        // element.style.top = '30px'
+                        element.style.transform = `translateY(-${trans
+                            }px)`
+                    }
+
+                }
             }
+        } else {
+            element.classList.add("dragging")
         }
     }
 
-    function validateMove(element: HTMLDivElement) {
+
+    function validateMove(element: HTMLDivElement): void {
+
+
         const parent = element.parentElement as HTMLDivElement
         const lastChildElementIndex = parent?.children.length! - 1
         const lastChildElement = parent?.children[lastChildElementIndex]
@@ -101,7 +123,7 @@ export function useTouch() {
                 dropIfWastePileToTableau(parentIndex)
                 dropSound.play()
                 setScore(false)
-
+                drop = true
 
             } else if (dataFoundation && dropCardToFoundationPileRules(parent?.children.length!, lastChildElementType, lastChildElementNumber, activeCardNumber!, activeCardType!)) {
                 const key = setDropKey()
@@ -115,7 +137,7 @@ export function useTouch() {
                 } else {
                     setScore(true)
                 }
-
+                drop = true
                 setTimeout(() => {
                     parent.classList.remove("valid-move")
                 }, 800)
@@ -130,12 +152,12 @@ export function useTouch() {
 
             dropSound.play()
             validateScore[key].currentLength -= 1
-
+            drop = true
         } else if (dataTableau && dropCardToTableauRules(parent?.children.length!, lastChildElementColor, lastChildElementNumber, activeCardNumber!, activeCardColor!)) {
             dropIfTableauToTableau(parentIndex, activeCardParentIndex!, activeCardIndex!)
 
             setScore(false)
-
+            drop = true
             flipCard(activeCardParentIndex!)
             dropSound.play()
 
@@ -152,6 +174,7 @@ export function useTouch() {
 
             parent.classList.add("valid-move")
             successAudio.play()
+            drop = true
             validateScore[key].maxLength = foundation[key].length
             if (validateScore[key].currentLength < 0) {
                 validateScore[key].currentLength++
@@ -175,6 +198,7 @@ export function useTouch() {
             foundation[key] = [...foundation[key], currentCard]
             parent.classList.add("valid-move")
             successAudio.play()
+            drop = true
             dropTimeout = setTimeout(() => {
                 parent.classList.remove("valid-move")
                 clearTimeout(dropTimeout)
@@ -185,13 +209,17 @@ export function useTouch() {
         resetZIndex()
     }
 
-    function setElement(element: HTMLDivElement) {
+
+    function setElement(element: HTMLDivElement): void {
         const parent = <HTMLDivElement>element.parentElement
         const dataWastePile = element.getAttribute("data-waste-pile")
         const dataFoundation = parent?.getAttribute("data-foundation")
         const dataTableauAtr = parent?.getAttribute("data-tableau")
         top = element.style.top
-        activeCardIndex = parseInt(element.getAttribute("data-index")!)
+        if (element.getAttribute("data-index")) {
+            activeCardIndex = parseInt(element.getAttribute("data-index")!)
+        }
+
         if (dataWastePile) {
             isDraggedFromWastePile = true
             activeCardParentIndex = -1
@@ -202,7 +230,6 @@ export function useTouch() {
             } else {
                 activeCardParentIndex = parseInt(dataTableauAtr!)
                 dataTableau = true
-
             }
 
         }

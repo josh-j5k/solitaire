@@ -17,6 +17,15 @@ export default {
 				tablet: { min: "639px", max: "1023px" },
 				// => @media (width: > 639 <= 1023) { ... }
 			},
+			animation: {
+				"rotate-left-right": "rotate-left-right 2s infinite linear",
+			},
+			keyframes: {
+				"rotate-left-right": {
+					"0%, 100%": { rotate: "-45deg" },
+					"50%": { rotate: "0deg" },
+				},
+			},
 		},
 	},
 	plugins: [],

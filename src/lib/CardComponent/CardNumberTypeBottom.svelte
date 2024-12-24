@@ -10,9 +10,11 @@
 		$props()
 </script>
 
-<div class="absolute bottom-1 right-2 rotate-180 flex flex-col items-center">
+<div
+	class="absolute lg:bottom-1 bottom-0 right-2 rotate-180 flex flex-col items-center"
+>
 	<span class=" font-bold text-xl text-{class_props}"> {card_number} </span>
-	<span class="w-3 aspect-square -lg:hidden">
+	<span class="w-3 aspect-square -lg:-mt-1">
 		<Component {component}></Component>
 	</span>
 </div>

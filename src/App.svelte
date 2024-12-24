@@ -21,6 +21,8 @@
 	import { useDragAndDrop } from "./hooks/useDragAndDrop.svelte"
 	import type { TFoundation } from "./types/Cards"
 	import { useTouch } from "./hooks/useTouch.svelte"
+	import HowToPlay from "./lib/HowToPlay.svelte"
+	import ScreenOrientationPopup from "./lib/ScreenOrientationPopup.svelte"
 
 	const { cardNumber, cardType, cardColor } = setCardNameAndNumberAtrribute()
 	const { ondrag, ondragend, ondragstart, ondrop } = useDragAndDrop()
@@ -35,10 +37,22 @@
 
 	onMount(() => {
 		if (innerWidth < 990) {
-			store.offsetTop = 15
+			store.offsetTop = 10
 			store.height = 100
+			document.getElementById("main")?.classList.add("mobile")
 		}
-
+		if (screen.orientation.type === "portrait-primary") {
+			store.popup = true
+		}
+		screen.orientation.addEventListener("change", (event) => {
+			const target = event.target as ScreenOrientation
+			const type = target.type
+			if (type === "landscape-primary") {
+				store.popup = false
+			} else {
+				store.popup = true
+			}
+		})
 		if (
 			navigator.userAgent.includes("iPhone") ||
 			navigator.userAgent.includes("Android")
@@ -64,6 +78,10 @@
 			<section
 				class="min-h-screen w-screen pt-12 overflow-hidden relative isolate"
 			>
+				<!-- How to play -->
+				{#if store.howToPlay}
+					<HowToPlay />
+				{/if}
 				<!-- header -->
 				<Header {clickSound} />
 				<!-- Hamburger Menu -->
@@ -74,7 +92,9 @@
 					class="w-4/5 mx-auto h-screen absolute inset-0 pt-12 -z-10 -lg:overflow-hidden grid gap-4 lg:gap-y-8 grid-cols-7 grid-rows-[150px_auto] -lg:grid-rows-[105px_auto]"
 				>
 					<!-- Stockpile -->
-					<div class="relative h-[140px] col-start-1 col-end-2 row-auto">
+					<div
+						class="relative h-[140px] -lg:h-[100px] col-start-1 col-end-2 row-auto"
+					>
 						{#if stockPile.length === 0 && wastePile.length > 0}
 							<div
 								id="container"
@@ -132,7 +152,7 @@
 					<!-- wastePile -->
 					<div
 						data-stack-faceup
-						class="relative col-start-2 col-end-3 h-[140px] row-auto"
+						class="relative col-start-2 col-end-3 h-[140px] -lg:h-[100px] row-auto"
 					>
 						{#each wastePile as card, index}
 							<div
@@ -162,17 +182,19 @@
 							</div>
 						{/each}
 					</div>
+					<div></div>
 					<!-- foundation -->
 					{#each Array(4) as _, index}
 						<div
 							data-foundation={index}
-							class="relative {dimensions} col-start-{index +
-								4} col-end-{index +
-								5} row-auto border-2 rounded-xl border-gray-100"
+							class="relative {dimensions}  row-auto border-2 rounded-xl border-gray-100"
 						>
 							<div
 								ondragover={dragOver}
-								role="application"
+								role="button"
+								tabindex="0"
+								onkeydown={keyBoardReveal}
+								onclick={touch}
 								{ondrop}
 								class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 							>
@@ -227,7 +249,10 @@
 								1} containing_block row-start-2 row-end-3"
 							><div
 								ondragover={dragOver}
-								role="application"
+								role="button"
+								tabindex="0"
+								onkeydown={keyBoardReveal}
+								onclick={touch}
 								{ondrop}
 								class="absolute w-full h-[inherit] inset-0 opacity-0 dragover_zone"
 							>
@@ -257,7 +282,7 @@
 									{ondragstart}
 									{ondrag}
 									{ondragend}
-									class="absolute {dimensions} {design} {store.gameLoadingAnimation &&
+									class="absolute stack_face_up {dimensions} {design} {store.gameLoadingAnimation &&
 									index == 0
 										? '-translate-y-36'
 										: store.gameLoadingAnimation && index > 0
@@ -276,23 +301,40 @@
 			<Welcome />
 		{/if}
 	{/if}
+	{#if store.popup}
+		<ScreenOrientationPopup />
+	{/if}
 </main>
 
 <style scoped>
+	main {
+		--stack-face-up-offset: 15px;
+	}
 	.gradient-text {
 		background-image: linear-gradient(to bottom, #ff9900, #ff3366);
 		background-clip: text;
 		-webkit-background-clip: text; /* For Safari/Chrome */
 		color: transparent;
 	}
-
+	.left-0 {
+		left: 0;
+	}
+	.left-12 {
+		left: 48px;
+	}
+	.left-6 {
+		left: 24px;
+	}
+	.left-12 {
+		left: 48px;
+	}
 	section {
 		background-image: url("./assets/perfect-green-grass.jpg");
 	}
 	.dragging {
 		box-shadow:
 			0 0 10px 4px rgba(255, 217, 0, 0.733),
-			20px 20px 0 rgba(0, 0, 0, 0.2);
+			20px 20px 0 rgba(0, 0, 0, 0.2) !important;
 		z-index: 10;
 	}
 	.dragover_zone {
@@ -399,55 +441,48 @@
 			transform: rotateY(0);
 		}
 	}
-	.containing_block > div:nth-child(2) {
+
+	.containing_block div:nth-child(2) {
 		top: 0;
 	}
-	.containing_block > div:nth-child(3) {
+	.containing_block div:nth-child(3) {
 		top: calc(var(--offset-top) * 1);
 	}
-	.containing_block > div:nth-child(4) {
+	.containing_block div:nth-child(4) {
 		top: calc(var(--offset-top) * 2);
 	}
-	.containing_block > div:nth-child(4) {
-		top: calc(var(--offset-top) * 2);
-	}
-	.containing_block > div:nth-child(5) {
+
+	.containing_block div:nth-child(5) {
 		top: calc(var(--offset-top) * 3);
 	}
-	.containing_block > div:nth-child(6) {
+	.containing_block div:nth-child(6) {
 		top: calc(var(--offset-top) * 4);
 	}
-	.containing_block > div:nth-child(7) {
+	.containing_block div:nth-child(7) {
 		top: calc(var(--offset-top) * 5);
 	}
-	.containing_block > div:nth-child(8) {
+	.containing_block div:nth-child(8) {
 		top: calc(var(--offset-top) * 6);
 	}
-	.containing_block > div:nth-child(9) {
+	.containing_block div:nth-child(9) {
 		top: calc(var(--offset-top) * 7);
 	}
-	.containing_block > div:nth-child(10) {
+	.containing_block div:nth-child(10) {
 		top: calc(var(--offset-top) * 8);
 	}
-	.containing_block > div:nth-child(11) {
+	.containing_block div:nth-child(11) {
 		top: calc(var(--offset-top) * 9);
 	}
-	.containing_block > div:nth-child(12) {
+	.containing_block div:nth-child(12) {
 		top: calc(var(--offset-top) * 10);
 	}
-	.containing_block > div:nth-child(13) {
+	.containing_block div:nth-child(13) {
 		top: calc(var(--offset-top) * 11);
 	}
-	.containing_block > div:nth-child(14) {
+	.containing_block div:nth-child(14) {
 		top: calc(var(--offset-top) * 12);
 	}
-	.containing_block > div:nth-child(15) {
+	.containing_block div:nth-child(15) {
 		top: calc(var(--offset-top) * 13);
-	}
-	.containing_block > div:nth-child(16) {
-		top: calc(var(--offset-top) * 14);
-	}
-	.containing_block > div:nth-child(17) {
-		top: calc(var(--offset-top) * 15);
 	}
 </style>

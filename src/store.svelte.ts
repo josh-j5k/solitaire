@@ -17,7 +17,10 @@ export const store = $state({
     difficulty: 'easy',
     height: 150,
     offsetTop: 25,
-    isMobile: false
+    isMobile: false,
+    howToPlay: false,
+    leaderboard: false,
+    popup: false,
 
 })
 export let nonReactiveState = <{ totalCards: number, streakInterval: number | undefined, timeInterval: number | undefined }>{
