@@ -15,7 +15,7 @@
 	<span class="w-full aspect-square">
 		<img
 			draggable="false"
-			src="src\assets\queen_no_type.png"
+			src="/src/assets/queen_no_type.png"
 			alt=""
 			class="w-4/5 -lg:w-3/5 mx-auto"
 		/>

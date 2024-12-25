@@ -335,9 +335,10 @@
 	.left-12 {
 		left: 48px;
 	}
-	section {
+	:global(body) {
 		background-image: url("./assets/perfect-green-grass.jpg");
 	}
+
 	.dragging {
 		box-shadow:
 			0 0 10px 4px rgba(255, 217, 0, 0.733),
@@ -349,6 +350,7 @@
 	}
 	.dragover_zone.show {
 		z-index: 999;
+		background-color: #ff9900;
 	}
 	.dragged {
 		position: absolute;

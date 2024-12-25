@@ -9,7 +9,6 @@ import { setScore, showWinnigScreen } from "./useScore";
 
 export function useTouch(): { touch: (e: MouseEvent) => void } {
 
-    let top = undefined
     let activeCardIndex = <number | undefined>undefined
     let isDraggedFromWastePile = false
     let activeCardParentIndex = undefined
@@ -22,7 +21,9 @@ export function useTouch(): { touch: (e: MouseEvent) => void } {
     let drop = false
 
     function touch(e: MouseEvent): void {
-        if (!store.isMobile) {
+
+
+        if (store.isMobile === false) {
             return
         }
         const dragoverZone = document.querySelectorAll(".dragover_zone")
@@ -30,12 +31,12 @@ export function useTouch(): { touch: (e: MouseEvent) => void } {
 
         if (document.documentElement.dataset.dragging === "true") {
             validateMove(element)
-            document.documentElement.dataset.dragging = "false"
-            if (!drop) {
+
+            if (drop === false) {
                 dragoverZone.forEach((zone) => {
                     if (zone.classList.contains("show")) zone.classList.remove("show")
                 })
-                if (activeCardIndex) {
+                if (activeCardIndex !== undefined) {
                     for (let index = 0; index < nodeList!.length; index++) {
                         const element = nodeList![index] as HTMLDivElement
                         if (index >= activeCardIndex!) {
@@ -43,7 +44,6 @@ export function useTouch(): { touch: (e: MouseEvent) => void } {
                                 element.classList.remove("dragging")
                             }
                             if (dataTableau) {
-                                element.style.top = top!
                                 element.style.transform = 'translateY(0)'
                             }
 
@@ -53,9 +53,10 @@ export function useTouch(): { touch: (e: MouseEvent) => void } {
                     activeCardElement!.classList.remove("dragging")
                 }
                 dragEndSound.play()
-                activeCardIndex = undefined
             }
             drop = false
+            document.documentElement.dataset.dragging = "false"
+            activeCardIndex = undefined
             return
         }
         document.documentElement.dataset.dragging = "true"
@@ -67,7 +68,9 @@ export function useTouch(): { touch: (e: MouseEvent) => void } {
         })
 
         dragStartSound.play()
-        if (activeCardIndex != undefined) {
+
+
+        if (activeCardIndex !== undefined) {
 
             let spacing = nodeList!.length - 1 - activeCardIndex
             let trans = spacing * 15
@@ -76,7 +79,6 @@ export function useTouch(): { touch: (e: MouseEvent) => void } {
                 if (index >= activeCardIndex!) {
                     element.classList.add("dragging")
                     if (dataTableau) {
-                        // element.style.top = '30px'
                         element.style.transform = `translateY(-${trans
                             }px)`
                     }
@@ -105,7 +107,6 @@ export function useTouch(): { touch: (e: MouseEvent) => void } {
         const dataFoundation = parent?.getAttribute("data-foundation")
         const dataTableau = parent?.getAttribute("data-tableau")
         let parentIndex: number
-        let dropTimeout: number
 
 
         if (parent.getAttribute("data-tableau")) {
@@ -182,10 +183,7 @@ export function useTouch(): { touch: (e: MouseEvent) => void } {
                 setScore(true)
 
             }
-            dropTimeout = setTimeout(() => {
-                parent.classList.remove("valid-move")
-                clearTimeout(dropTimeout)
-            }, 800)
+
             flipCard(activeCardParentIndex!)
         } else if (
             dataFoundation &&
@@ -199,10 +197,7 @@ export function useTouch(): { touch: (e: MouseEvent) => void } {
             parent.classList.add("valid-move")
             successAudio.play()
             drop = true
-            dropTimeout = setTimeout(() => {
-                parent.classList.remove("valid-move")
-                clearTimeout(dropTimeout)
-            }, 800)
+
         }
 
         showWinnigScreen()
@@ -215,7 +210,6 @@ export function useTouch(): { touch: (e: MouseEvent) => void } {
         const dataWastePile = element.getAttribute("data-waste-pile")
         const dataFoundation = parent?.getAttribute("data-foundation")
         const dataTableauAtr = parent?.getAttribute("data-tableau")
-        top = element.style.top
         if (element.getAttribute("data-index")) {
             activeCardIndex = parseInt(element.getAttribute("data-index")!)
         }

@@ -8,19 +8,18 @@ import { flipCard } from './useMoves'
 
 
 export function useDragAndDrop() {
-    let left = $state<string>()
-    let top = $state<string>()
-    let clientX = $state<number>()
-    let clientY = $state<number>()
-    let activeCardIndex = $state<number>()
-    let isDraggedFromWastePile = $state<boolean>()
-    let activeCardParentIndex = $state<number>()
-    let activeCardType = $state<string>()
-    let activeCardNumber = $state<number>()
-    let activeCardColor = $state<string>()
-    let activeCardElement = $state<HTMLDivElement>()
-    let indices = $state<NodeListOf<Element>>()
 
+    let clientX = <number | undefined>undefined
+    let clientY = <number | undefined>undefined
+    let activeCardIndex = <number | undefined>undefined
+    let isDraggedFromWastePile = false
+    let activeCardParentIndex = <number | undefined>undefined
+    let activeCardType = <string | undefined>undefined
+    let activeCardNumber = <number | undefined>undefined
+    let activeCardColor = <string | undefined>undefined
+    let activeCardElement = <HTMLDivElement | undefined>undefined
+    let indices = <NodeListOf<Element> | undefined>undefined
+    let drop = false
 
     function ondragstart(e: DragEvent) {
         dragStartSound.load()
@@ -31,9 +30,9 @@ export function useDragAndDrop() {
         const dataTableau = parent?.getAttribute("data-tableau")
         indices = parent.querySelectorAll("div[data-index]")
         dragStartSound.play()
-        top = element.style.top
-        left = element.style.left
-        activeCardIndex = parseInt(element.getAttribute("data-index")!)
+        if (element.getAttribute("data-index")) {
+            activeCardIndex = parseInt(element.getAttribute("data-index")!)
+        }
         clientX = e.x
         clientY = e.y
 
@@ -54,55 +53,70 @@ export function useDragAndDrop() {
         activeCardColor = element.getAttribute("data-card-color")!
         activeCardElement = element
         e.dataTransfer?.setDragImage(img, 0, 0)
+        const dragoverZone = document.querySelectorAll(".dragover_zone")
+
+        setTimeout(() => {
+            dragoverZone.forEach((zone) => {
+                zone.classList.add("show")
+            })
+        }, 5);
     }
 
 
     function ondrag(e: DragEvent) {
-        const dragoverZone = document.querySelectorAll(".dragover_zone")
-        dragoverZone.forEach((zone) => {
-            zone.classList.add("show")
-        })
 
-        activeCardElement!.classList.add("dragging")
+
         let centerX = e.clientX - clientX!
         let centerY = e.clientY - clientY!
-        activeCardElement!.style.transform = `translateX(${centerX.toString()}px) translateY(${centerY.toString()}px)`
 
 
-        for (let index = 0; index < indices!.length; index++) {
-            const element = indices![index] as HTMLDivElement
-            if (index > activeCardIndex!) {
-                element.classList.add("dragging")
-                let centerX = e.clientX - clientX!
-                let centerY = e.clientY - clientY!
-                element.style.transform = `translateX(${centerX.toString()}px) translateY(${centerY.toString()}px)`
+        if (activeCardIndex !== undefined) {
+            for (let index = 0; index < indices!.length; index++) {
+                const element = indices![index] as HTMLDivElement
+                if (index >= activeCardIndex!) {
+                    element.classList.add("dragging")
+                    let centerX = e.clientX - clientX!
+                    let centerY = e.clientY - clientY!
+                    element.style.transform = `translateX(${centerX.toString()}px) translateY(${centerY.toString()}px)`
+                }
             }
+        } else {
+            activeCardElement!.classList.add("dragging")
+            activeCardElement!.style.transform = `translateX(${centerX.toString()}px) translateY(${centerY.toString()}px)`
         }
     }
 
     function ondragend(e: DragEvent) {
-        dragEndSound.load()
-        if (activeCardElement) {
-            activeCardElement.style.transform = "translate(0)"
-            activeCardElement.classList.remove("dragging")
-            activeCardElement.style.top = top!
-            activeCardElement.style.left = left!
-            let topSliced = 0
-            dragEndSound.play()
-            topSliced = parseInt(top!.slice(0, -2))
-            for (let index = 0; index < indices!.length; index++) {
-                if (index > activeCardIndex!) {
-                    topSliced += store.offsetTop
-                    const element = indices![index] as HTMLDivElement
-                    element.style.transform = "translate(0)"
-                    element.style.top = topSliced.toString() + "px"
-                    element.style.left = left!
-                    element.classList.remove("dragging")
-                }
-            }
+        e.preventDefault()
+        if (
+            drop === false
+        ) {
 
-            resetZIndex()
+
+            if (activeCardIndex !== undefined) {
+                for (let index = 0; index < indices!.length; index++) {
+                    if (index >= activeCardIndex!) {
+
+                        const element = indices![index] as HTMLDivElement
+                        element.style.transform = "translate(0)"
+
+                        element.classList.remove("dragging")
+                    }
+                }
+
+            } {
+                activeCardElement!.style.transform = "translate(0)"
+                activeCardElement!.classList.remove("dragging")
+
+            }
+        } {
+            dragEndSound.load()
+
+            dragEndSound.play()
+            drop = false
         }
+        resetZIndex()
+        activeCardIndex = undefined
     }
 
     // Drop
@@ -124,7 +138,7 @@ export function useDragAndDrop() {
         const dataFoundation = parent?.getAttribute("data-foundation")
         const dataTableau = parent?.getAttribute("data-tableau")
         let parentIndex: number
-        let dropTimeout: number
+
 
 
         if (parent.getAttribute("data-tableau")) {
@@ -142,6 +156,7 @@ export function useDragAndDrop() {
                 dropIfWastePileToTableau(parentIndex)
                 dropSound.play()
                 setScore(false)
+                drop = true
 
             } else if (dataFoundation && dropCardToFoundationPileRules(parent?.children.length!, lastChildElementType, lastChildElementNumber, activeCardNumber!, activeCardType!)) {
                 const key = setDropKey()
@@ -156,8 +171,8 @@ export function useDragAndDrop() {
                     setScore(true)
                 }
 
-
-
+                showWinnigScreen()
+                drop = true
             }
         } else if (
             dataTableau &&
@@ -167,7 +182,7 @@ export function useDragAndDrop() {
             dropIfFoundationToTableau(key, parentIndex)
             dropSound.play()
             validateScore[key].currentLength -= 1
-
+            drop = true
         } else if (dataTableau && dropCardToTableauRules(parent?.children.length!, lastChildElementColor, lastChildElementNumber, activeCardNumber!, activeCardColor!)) {
             dropIfTableauToTableau(parentIndex, activeCardParentIndex!, activeCardIndex!)
 
@@ -175,7 +190,7 @@ export function useDragAndDrop() {
 
             flipCard(activeCardParentIndex!)
             dropSound.play()
-
+            drop = true
         } else if (dataFoundation && dropCardToFoundationPileRules(parent?.children.length!, lastChildElementType, lastChildElementNumber, activeCardNumber!, activeCardType!)) {
             if (
                 activeCardIndex !==
@@ -196,8 +211,9 @@ export function useDragAndDrop() {
                 setScore(true)
 
             }
-
+            showWinnigScreen()
             flipCard(activeCardParentIndex!)
+            drop = true
         } else if (
             dataFoundation &&
             parent.hasAttribute("data-foundation") &&
@@ -209,10 +225,11 @@ export function useDragAndDrop() {
             foundation[key] = [...foundation[key], currentCard]
             parent.classList.add("valid-move")
             successAudio.play()
-
+            drop = true
         }
-        showWinnigScreen()
-        resetZIndex()
+        // activeCardIndex = undefined
+
+        // resetZIndex()
     }
 
     return {

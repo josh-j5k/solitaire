@@ -5,7 +5,7 @@ import { winningSound } from '../utils/audio'
 
 export function setScore(isFoundation: boolean) {
     if (nonReactiveState.streakInterval) {
-        isFoundation ? (store.score += Math.round(15 * difficultyMultiplier())) : (store.score += Math.round(15 * difficultyMultiplier()))
+        isFoundation ? (store.score += Math.round(15 * difficultyMultiplier())) : (store.score += Math.round(10 * difficultyMultiplier()))
     } else {
         isFoundation ? (store.score += 10) : (store.score += 5)
     }
